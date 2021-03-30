@@ -6,29 +6,36 @@ import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDate;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 public class Citizen extends User implements Serializable {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     @Column(unique = true, nullable = false)
-    private int noAssuranceMaladie;
+    private String noAssuranceMaladie;
     @Column(nullable = false)
-    private Date birth;
+    private LocalDate birth;
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Sex sex;
     @Column(nullable = false)
     private String phone;
     @ManyToOne
-    @Column(nullable = false)
+    @JoinColumn(nullable = false)
     private Address address;
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Citizen tutor;
+    @JoinColumn(nullable = false)
     @OneToOne
-    @Column(nullable = false)
     private License license;
+    private LocalDate dateJoined;
+
 
     public Citizen() {
+        setActive(true);
+        dateJoined = LocalDate.now();
     }
 }

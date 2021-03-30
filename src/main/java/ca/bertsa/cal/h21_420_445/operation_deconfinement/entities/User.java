@@ -1,18 +1,17 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.entities;
 
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.validators.UniqueEmail;
 import lombok.Data;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
-@Entity
 @Data
+@MappedSuperclass
 public abstract class User implements Serializable {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
     private boolean active;
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
+//    @UniqueEmail //TODO MAKE A SQL SCRIPT
     private String email;
     @Column(nullable = false)
     private String password;
@@ -20,4 +19,5 @@ public abstract class User implements Serializable {
     private String lastName;
     @Column(nullable = false)
     private String firstName;
+
 }
