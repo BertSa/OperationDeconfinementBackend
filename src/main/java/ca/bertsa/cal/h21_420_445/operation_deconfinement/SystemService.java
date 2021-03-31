@@ -1,8 +1,6 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.CitizenRepository;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.LicenseRepository;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
@@ -24,62 +22,55 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.*;
+
 
 @Service
 @Order(1)
 public class SystemService {
-    private final String directory = "licenses/";
-    private final String qrFilename = "/qr.png";
-    private final String pdfFilename = "/document.pdf";
+    private static final String IMAGE_FORMAT = "PNG";
 
     @Autowired
     private JavaMailSender mailSender;
 
     @Autowired
-    private CitizenRepository userRepository;
-
-    @Autowired
-    private LicenseRepository permisRepository;
-
+    private CitizenRepository citizenRepository;
 
     public boolean login(String str1, String str2) {
-        return userRepository.findUserByEmailIgnoreCaseAndPassword(str1, str2) != null;
+        return citizenRepository.findByEmailIgnoreCaseAndPassword(str1, str2) != null;
     }
 
     public boolean isLoginExist(String str) {
-        return userRepository.findUserByEmailIgnoreCase(str) != null;
+        return citizenRepository.findByEmailIgnoreCase(str) != null;
     }
 
-    public List<License> AllPermis() {
-        return permisRepository.findAll();
-    }
 
     public void generateQR(String data, String subDirectory) throws Exception {
         createDirectoriesIfDontExists(subDirectory);
-        Path path = FileSystems.getDefault().getPath(directory + subDirectory + qrFilename);
+        Path path = FileSystems.getDefault().getPath(DIRECTORY_LICENSES + subDirectory + QR_FILENAME);
         QRCodeWriter qr = new QRCodeWriter();
-        MatrixToImageWriter.writeToPath(qr.encode(data, BarcodeFormat.QR_CODE, 300, 300), "PNG", path);
+        MatrixToImageWriter.writeToPath(qr.encode(data, BarcodeFormat.QR_CODE, QR_CODE_WIDTH, QR_CODE_HEIGHT), IMAGE_FORMAT, path);
     }
 
     private void createDirectoriesIfDontExists(String subDirectory) throws IOException {
-        if (!Files.isDirectory(Path.of(directory + subDirectory))) {
-            if (!Files.isDirectory(Path.of(directory))) {
-                Files.createDirectory(Path.of(directory));
+        if (!Files.isDirectory(Path.of(DIRECTORY_LICENSES + subDirectory))) {
+            if (!Files.isDirectory(Path.of(DIRECTORY_LICENSES))) {
+                Files.createDirectory(Path.of(DIRECTORY_LICENSES));
             }
-            Files.createDirectory(Path.of(directory + subDirectory));
+            Files.createDirectory(Path.of(DIRECTORY_LICENSES + subDirectory));
         }
     }
 
     public void generatePDF(String subDirectory) throws Exception {
-        if (!Files.exists(Path.of(directory + subDirectory + qrFilename))) return;
+        if (!Files.exists(Path.of(DIRECTORY_LICENSES + subDirectory + QR_FILENAME))) return;
 
-        PdfWriter writer = new PdfWriter(directory + subDirectory + pdfFilename);
+        PdfWriter writer = new PdfWriter(DIRECTORY_LICENSES + subDirectory + PDF_FILENAME);
         PdfDocument pdf = new PdfDocument(writer);
         Document document = new Document(pdf);
 
 
-        Image image = new Image(ImageDataFactory.create(directory + subDirectory + qrFilename));
+        Image image = new Image(ImageDataFactory.create(DIRECTORY_LICENSES + subDirectory + QR_FILENAME));
 
         Paragraph p = new Paragraph("Bonjour Toi\n")
                 .add(" Voici ton code permis de santé")
@@ -97,14 +88,14 @@ public class SystemService {
         helper.setTo(mailTo);
         helper.setSubject(subject);
         helper.setText(body);
-        helper.addAttachment("QR CODE", new File((directory + subDirectory + qrFilename)));
-        helper.addAttachment("QR PDF", new File(directory + subDirectory + pdfFilename));
+        helper.addAttachment("QR CODE", new File((DIRECTORY_LICENSES + subDirectory + QR_FILENAME)));
+        helper.addAttachment("QR PDF", new File(DIRECTORY_LICENSES + subDirectory + PDF_FILENAME));
 
         mailSender.send(message);
 
     }
 
     public boolean isNoAssuranceMaladieExist(String value) {
-        return userRepository.findUserByNoAssuranceMaladie(value) != null;
+        return citizenRepository.findByNoAssuranceMaladieIgnoreCase(value) != null;
     }
 }

@@ -2,18 +2,19 @@ package ca.bertsa.cal.h21_420_445.operation_deconfinement.entities;
 
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
-import lombok.*;
-import org.springframework.lang.Nullable;
-import org.springframework.web.bind.annotation.RequestParam;
+import lombok.Getter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Objects;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.*;
+
 @Getter
 @Entity
 public class License implements Serializable {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,11 +31,11 @@ public class License implements Serializable {
     }
 
     public void setCategory(LocalDate birth) {
-        if (birth.isBefore(LocalDate.now().minusYears(65))) {
+        if (birth.isBefore(LocalDate.now().minusYears(SENIOR_AGE).plusDays(1))) {
             category = CategoryLicence.Senior;
-        } else if (birth.isBefore(LocalDate.now().minusYears(25))) {
+        } else if (birth.isBefore(LocalDate.now().minusYears(ADULT_AGE).plusDays(1))) {
             category = CategoryLicence.Adult;
-        } else if (birth.isBefore(LocalDate.now().minusYears(16))) {
+        } else if (birth.isBefore(LocalDate.now().minusYears(YOUNG_ADULT_AGE).plusDays(1))) {
             category = CategoryLicence.YoungAdult;
         } else {
             category = CategoryLicence.Children;

@@ -26,6 +26,8 @@ class SystemServiceTest {
         Files.deleteIfExists(Path.of("licenses/testQr/qr.png"));
         systemService.generateQR("data", "testQr");
         assertTrue(Files.exists(Path.of("licenses/testQr/qr.png")));
+        systemService.generateQR("data", "testQr");
+        assertTrue(Files.exists(Path.of("licenses/testQr/qr.png")));
     }
 
     @Test
@@ -33,7 +35,14 @@ class SystemServiceTest {
     void createPdfTest() throws Exception {
         Files.deleteIfExists(Path.of("licenses/testQr/document.pdf"));
         systemService.generatePDF("testQr");
+
         assertTrue(Files.exists(Path.of("licenses/testQr/document.pdf")));
+
+        Files.deleteIfExists(Path.of("licenses/testQr/document.pdf"));
+        Files.deleteIfExists(Path.of("licenses/testQr/qr.png"));
+        systemService.generatePDF("testQr");
+
+        assertFalse(Files.exists(Path.of("licenses/testQr/document.pdf")));
     }
 
 }

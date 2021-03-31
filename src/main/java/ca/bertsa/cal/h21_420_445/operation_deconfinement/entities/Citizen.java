@@ -28,14 +28,16 @@ public class Citizen extends User implements Serializable {
     @ManyToOne
     @JoinColumn(nullable = false)
     private Address address;
-    @JoinColumn(nullable = false)
     @OneToOne
     private License license;
+
     private LocalDate dateJoined;
+    @ManyToOne
+    private Citizen tutor;
 
 
     public Citizen() {
-        setActive(true);
+        super();
         dateJoined = LocalDate.now();
     }
 }

@@ -1,6 +1,7 @@
-package ca.bertsa.cal.h21_420_445.operation_deconfinement.validators;
+package ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.validators;
 
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.SystemService;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.UniqueEmail;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.ConstraintValidator;
@@ -14,7 +15,7 @@ public class UniqueEmailValidator implements ConstraintValidator<UniqueEmail, St
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        return value != null&&!userService.isLoginExist(value);
+        return value != null && !userService.isLoginExist(value);
     }
 
     @Override
