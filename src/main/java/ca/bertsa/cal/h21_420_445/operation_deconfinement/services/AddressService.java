@@ -7,11 +7,11 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 
 @Service
+@SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 public class AddressService {
 
     @Autowired
     private AddressRepository addressRepository;
-
 
     public Address createOrGetAddress(String zipCode, String street, String city, String province, @Nullable String apt) {
         Address address = addressRepository.findAddressByZipCodeIgnoreCaseAndStreetIgnoreCaseAndCityIgnoreCaseAndProvinceIgnoreCaseAndApt(zipCode, street, city, province, apt);

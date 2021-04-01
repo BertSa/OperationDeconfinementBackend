@@ -13,10 +13,10 @@ import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 
 public class TutorNeededOrNotValidator implements ConstraintValidator<TutorNeededOrNot, CitizenData> {
-    String birth;
-    String tutor;
+    private String birth;
+    private String tutor;
     @Autowired
-    CitizenService citizenService;
+    private CitizenService citizenService;
 
     public void initialize(TutorNeededOrNot constraint) {
         birth = constraint.birth();

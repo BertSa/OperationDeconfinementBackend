@@ -14,7 +14,6 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class CitizenServiceTest {
     @Autowired
     private CitizenService citizenService;
@@ -22,6 +21,14 @@ class CitizenServiceTest {
     private CitizenRepository citizenRepository;
     @Autowired
     private AddressRepository addressRepository;
+
+    @Test
+    void injectedComponentsAreNotNull() {
+        assertNotNull(citizenService);
+        assertNotNull(citizenRepository);
+        assertNotNull(addressRepository);
+    }
+
 
     @Test
     @DisplayName("isCitizenValidTutorTest")

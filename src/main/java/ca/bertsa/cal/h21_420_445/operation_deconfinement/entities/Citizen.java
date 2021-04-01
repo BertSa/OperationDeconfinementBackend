@@ -30,7 +30,6 @@ public class Citizen extends User implements Serializable {
     private Address address;
     @OneToOne
     private License license;
-
     private LocalDate dateJoined;
     @ManyToOne
     private Citizen tutor;

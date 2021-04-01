@@ -6,6 +6,7 @@ public interface Consts {
     byte YOUNG_ADULT_AGE = 16;
 
     byte TUTOR_MINIMUM_AGE = 18;
+    byte NEGATIVE_TEST_DURATION = 14;
 
     String DIRECTORY_LICENSES = "licenses/";
     String PDF_FILENAME = "/document.pdf";
@@ -16,4 +17,6 @@ public interface Consts {
     String EMAIL_ALREADY_USED = "There is already user with this email!";
     String NAM_ALREADY_USED = "There is already user with this noAssuranceMaladie!";
     byte NAM_LENGTH = 12;
+    String RESPONSE_MESSAGE_USER_CREATED_CHILDREN = "Children created";
+    String RESPONSE_MESSAGE_USER_CREATED = "Citizen created";
 }

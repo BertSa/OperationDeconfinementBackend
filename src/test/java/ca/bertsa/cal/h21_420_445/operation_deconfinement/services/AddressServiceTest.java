@@ -14,7 +14,13 @@ class AddressServiceTest {
     @Autowired
     private AddressService addressService;
     @Autowired
-    AddressRepository addressRepository;
+    private AddressRepository addressRepository;
+
+    @Test
+    void injectedComponentsAreNotNull() {
+        assertNotNull(addressService);
+        assertNotNull(addressRepository);
+    }
 
     @Test
     void createOrGetAddress() {

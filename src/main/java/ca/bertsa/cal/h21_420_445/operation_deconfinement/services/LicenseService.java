@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 
 @Service
+@SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 public class LicenseService {
     @Autowired
     private SystemService systemService;
@@ -30,4 +31,7 @@ public class LicenseService {
         return save;
     }
 
+    public void deleteAll() {
+        this.licenseRepository.deleteAll();
+    }
 }

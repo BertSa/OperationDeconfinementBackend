@@ -1,8 +1,8 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.entities;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
-import org.hibernate.annotations.Columns;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -12,6 +12,7 @@ import java.io.Serializable;
 
 @Entity
 @Data
+@NoArgsConstructor
 public class Address implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,9 +23,6 @@ public class Address implements Serializable {
     private String province;
     private String apt;
 
-    public Address() {
-
-    }
 
     /**
      * @param zipCode  Postal code

@@ -7,9 +7,9 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.LoginDa
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.Sex;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.AddressRepository;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.CitizenRepository;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.LicenseRepository;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AddressService;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.LicenseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +22,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.LocalDate;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.RESPONSE_MESSAGE_USER_CREATED;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.RESPONSE_MESSAGE_USER_CREATED_CHILDREN;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SuppressWarnings("SpellCheckingInspection")
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -43,26 +46,30 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
     @Autowired
-    private CitizenRepository citizenRepository;
+    private CitizenService citizenService;
     @Autowired
-    private AddressRepository addressRepository;
+    private AddressService addressService;
     @Autowired
-    private LicenseRepository licenseRepository;
+    private LicenseService licenseService;
+
 
     private Citizen adultActive;
 
     private Address address;
     private CitizenData citizen;
 
+    @Test
+    void injectedComponentsAreNotNull() {
+        assertNotNull(mockMvc);
+        assertNotNull(objectMapper);
+        assertNotNull(citizenService);
+        assertNotNull(addressService);
+        assertNotNull(licenseService);
+    }
 
     @BeforeAll
     void before() {
-        Address addresss = new Address("h8s3dac2",
-                "39fafaef0 rue William-Macdonald",
-                "Lachinafsfeeae",
-                "qafefsc",
-                "13");
-        address = addressRepository.save(addresss);
+        address = addressService.createOrGetAddress("h8s3dac2", "39fafaef0 rue William-Macdonald", "Lachinafsfeeae", "qafefsc", "13");
 
         adultActive = new Citizen();
         adultActive.setEmail("u1@bertsa.ca");
@@ -75,7 +82,8 @@ class UserControllerTest {
         adultActive.setNoAssuranceMaladie("aaaa00001111");
         adultActive.setAddress(address);
 
-        citizenRepository.save(adultActive);
+
+        citizenService.add(adultActive);
     }
 
 
@@ -92,15 +100,15 @@ class UserControllerTest {
 
     @AfterEach
     void afterEach() {
-        licenseRepository.deleteAll();
+        licenseService.deleteAll();
     }
 
     @Test
     void loginTest() throws Exception {
-        assertNotNull(citizenRepository.findByEmailIgnoreCaseAndPassword(adultActive.getEmail(), adultActive.getPassword()));
+        assertNotNull(citizenService.findByEmailAndPassword(adultActive.getEmail(), adultActive.getPassword()));
 
         this.mockMvc.perform(
-                MockMvcRequestBuilders.post(API_USER +"/login")
+                MockMvcRequestBuilders.post(API_USER + "/login")
                         .param(PARAM_EMAIL, adultActive.getEmail())
                         .param(PARAM_PASSWORD, adultActive.getPassword()))
                 .andExpect(status().isOk())
@@ -113,10 +121,10 @@ class UserControllerTest {
         String email = "emailRandom@bertsa.ca";
         String password = "randomPassword";
 
-        assertNull(citizenRepository.findByEmailIgnoreCaseAndPassword(email, password));
+        assertNull(citizenService.findByEmailAndPassword(email, password));
 
         this.mockMvc.perform(
-                post("/api/user/login")
+                post(API_USER + "/login")
                         .param(PARAM_EMAIL, email)
                         .param(PARAM_PASSWORD, password))
                 .andExpect(status().isOk())
@@ -131,26 +139,26 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie("aaaa00001113");
         citizen.setBirth(LocalDate.now().minusYears(67));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("Citizen created"))
+                .andExpect(MockMvcResultMatchers.content().string(RESPONSE_MESSAGE_USER_CREATED))
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore + 1, sizeAfter);
 
-        Citizen c = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
 
         assertNotNull(c);
         assertEquals(TypeLicense.NegativeTest, c.getLicense().getType());
         assertEquals(CategoryLicence.Senior, c.getLicense().getCategory());
 
-        citizenRepository.delete(c);
+        citizenService.delete(c);
     }
 
     @Test
@@ -160,26 +168,26 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie("aaaa00001114");
         citizen.setBirth(LocalDate.now().minusYears(55));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/vaccine")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("Citizen created"))
+                .andExpect(MockMvcResultMatchers.content().string(RESPONSE_MESSAGE_USER_CREATED))
                 .andReturn();
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore + 1, sizeAfter);
 
-        Citizen c = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
 
         assertNotNull(c);
         assertEquals(TypeLicense.Vaccine, c.getLicense().getType());
         assertEquals(CategoryLicence.Adult, c.getLicense().getCategory());
 
-        citizenRepository.delete(c);
+        citizenService.delete(c);
 
     }
 
@@ -190,26 +198,26 @@ class UserControllerTest {
         citizen.setBirth(DEFAULT_BIRTH_CHILD);
         citizen.setTutor(new LoginData(adultActive.getEmail(), adultActive.getPassword()));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string("Children created"))
+                .andExpect(MockMvcResultMatchers.content().string(RESPONSE_MESSAGE_USER_CREATED_CHILDREN))
                 .andReturn();
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore + 1, sizeAfter);
 
-        Citizen c = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
 
         assertNotNull(c);
         assertEquals(TypeLicense.NegativeTest, c.getLicense().getType());
         assertEquals(CategoryLicence.Children, c.getLicense().getCategory());
 
-        citizenRepository.delete(c);
+        citizenService.delete(c);
     }
 
 
@@ -220,7 +228,7 @@ class UserControllerTest {
         citizen.setBirth(DEFAULT_BIRTH_CHILD);
         citizen.setTutor(new LoginData("NonExistant@bertsa.ca", DEFAULT_PASSWORD));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -229,10 +237,10 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
 
-        Citizen c = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
         assertNull(c);
     }
 
@@ -243,7 +251,7 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie("aaaa22222222");
         citizen.setBirth(DEFAULT_BIRTH_CHILD);
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -252,10 +260,10 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
 
-        Citizen c2 = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c2 = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
         assertNull(c2);
     }
 
@@ -273,7 +281,7 @@ class UserControllerTest {
         adultInactive.setAddress(address);
         adultInactive.setActive(false);
 
-        Citizen saveInactive = citizenRepository.save(adultInactive);
+        Citizen saveInactive = citizenService.add(adultInactive);
 
         citizen.setEmail("child3@bertsa.ca");
         citizen.setNoAssuranceMaladie("aaaa33333333");
@@ -281,7 +289,7 @@ class UserControllerTest {
         citizen.setTutor(new LoginData(adultInactive.getEmail(), adultInactive.getPassword()));
 
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -290,13 +298,13 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
 
-        Citizen c = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
         assertNull(c);
 
-        citizenRepository.delete(saveInactive);
+        citizenService.delete(saveInactive);
     }
 
     @Test
@@ -312,14 +320,14 @@ class UserControllerTest {
         tooYoung.setNoAssuranceMaladie("bbbb00001112");
         tooYoung.setAddress(address);
 
-        Citizen saveTooYoung = citizenRepository.save(tooYoung);
+        Citizen saveTooYoung = citizenService.add(tooYoung);
 
         citizen.setEmail("child3@bertsa.ca");
         citizen.setNoAssuranceMaladie("aaaa44444444");
         citizen.setBirth(DEFAULT_BIRTH_CHILD);
         citizen.setTutor(new LoginData(tooYoung.getEmail(), tooYoung.getPassword()));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -328,13 +336,13 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
 
-        Citizen c = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(citizen.getEmail(), citizen.getPassword(), true);
+        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
         assertNull(c);
 
-        citizenRepository.delete(saveTooYoung);
+        citizenService.delete(saveTooYoung);
     }
 
     @Test
@@ -343,9 +351,9 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie("dadw123212214");
         citizen.setBirth(LocalDate.now().minusYears(35));
 
-        assertNotNull(citizenRepository.findByEmailIgnoreCase(citizen.getEmail()));
+        assertNotNull(citizenService.findByEmail(citizen.getEmail()));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -354,10 +362,10 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
 
-        assertNotNull(citizenRepository.findByEmailIgnoreCase(adultActive.getEmail()));
+        assertNotNull(citizenService.findByEmail(adultActive.getEmail()));
     }
 
     @Test
@@ -365,7 +373,7 @@ class UserControllerTest {
         citizen.setEmail("not an email");
         citizen.setNoAssuranceMaladie("dadw12321221");
         citizen.setBirth(LocalDate.now().minusYears(67));
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -373,7 +381,7 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 
@@ -383,9 +391,9 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie(adultActive.getNoAssuranceMaladie());
         citizen.setBirth(LocalDate.now().minusYears(59));
 
-        assertNotNull(citizenRepository.findByNoAssuranceMaladieIgnoreCase(citizen.getNoAssuranceMaladie()));
+        assertNotNull(citizenService.findByNoAssuranceMaladie(citizen.getNoAssuranceMaladie()));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -394,7 +402,7 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 
@@ -404,7 +412,7 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie("dadd0000111");
         citizen.setBirth(LocalDate.now().minusYears(58));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -413,7 +421,7 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 
@@ -423,7 +431,7 @@ class UserControllerTest {
         citizen.setNoAssuranceMaladie("dadd000011112");
         citizen.setBirth(LocalDate.now().minusYears(58));
 
-        int sizeBefore = citizenRepository.findAll().size();
+        int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
                 MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
@@ -432,7 +440,7 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest())
                 .andDo(print());
 
-        int sizeAfter = citizenRepository.findAll().size();
+        int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 

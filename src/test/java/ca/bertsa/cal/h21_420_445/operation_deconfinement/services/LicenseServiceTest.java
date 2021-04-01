@@ -1,5 +1,6 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
@@ -18,10 +19,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class LicenseServiceTest {
     @Autowired
-    LicenseService licenseService;
+    private LicenseService licenseService;
     @Autowired
-    LicenseRepository licenseRepository;
+    private LicenseRepository licenseRepository;
 
+    @Test
+    void injectedComponentsAreNotNull() {
+        assertNotNull(licenseService);
+        assertNotNull(licenseRepository);
+    }
 
     @Test
     void createLicenseAtRegisterTest() throws Exception {
@@ -41,7 +47,7 @@ class LicenseServiceTest {
         assertEquals(TypeLicense.Vaccine, license4.getType());
 
         assertNotNull(license1.getDateExpire());
-        assertEquals(LocalDate.now().plusDays(14), license1.getDateExpire());
+        assertEquals(LocalDate.now().plusDays(Consts.NEGATIVE_TEST_DURATION), license1.getDateExpire());
         assertNull(license4.getDateExpire());
         assertEquals(LocalDate.now(), license1.getDateCreation());
 

@@ -1,7 +1,6 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations;
 
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.validators.UniqueEmailValidator;
 
 import javax.validation.Constraint;
@@ -13,15 +12,16 @@ import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.EMAIL_ALR
 import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+@SuppressWarnings("unused")
 @Retention(RUNTIME)
 @Target({FIELD, PARAMETER, LOCAL_VARIABLE})
 @Constraint(validatedBy = UniqueEmailValidator.class)
 public @interface UniqueEmail {
 
-    public String message() default EMAIL_ALREADY_USED;
+    String message() default EMAIL_ALREADY_USED;
 
-    public Class<?>[] groups() default {};
+    Class<?>[] groups() default {};
 
-    public Class<? extends Payload>[] payload() default {};
+    Class<? extends Payload>[] payload() default {};
 
 }

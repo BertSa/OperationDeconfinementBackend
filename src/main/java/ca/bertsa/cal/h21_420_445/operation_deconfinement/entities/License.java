@@ -45,7 +45,7 @@ public class License implements Serializable {
     public void setType(TypeLicense type) {
         this.type = Objects.requireNonNull(type);
         if (type == TypeLicense.NegativeTest) {
-            dateExpire = LocalDate.now().plusDays(14);
+            dateExpire = LocalDate.now().plusDays(NEGATIVE_TEST_DURATION);
         }
 
     }

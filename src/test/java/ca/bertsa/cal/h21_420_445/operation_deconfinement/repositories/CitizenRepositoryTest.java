@@ -22,7 +22,13 @@ class CitizenRepositoryTest {
     private AddressRepository addressRepository;
 
     private Address savedAddress;
-    Citizen adultActive;
+    private Citizen adultActive;
+
+    @Test
+    void injectedComponentsAreNotNull() {
+        assertNotNull(citizenRepository);
+        assertNotNull(addressRepository);
+    }
 
     @BeforeAll
     void before() {
