@@ -1,32 +1,35 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.controllers;
 
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.EnvironmentServer;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.SystemService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Address;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.LoginData;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.Sex;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AddressService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.LicenseService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 import java.time.LocalDate;
 
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.RESPONSE_MESSAGE_USER_CREATED;
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.RESPONSE_MESSAGE_USER_CREATED_CHILDREN;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.Negative_Test;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.Vaccine;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SuppressWarnings("SpellCheckingInspection")
@@ -37,14 +40,18 @@ class UserControllerTest {
     private static final String PARAM_EMAIL = "email";
     private static final String PARAM_PASSWORD = "password";
     private static final String DEFAULT_PASSWORD = "password";
-    private static final LocalDate DEFAULT_BIRTH_CHILD = LocalDate.now().minusYears(10);
     private static final String API_USER = "/api/user";
     private static final String REGISTER_URL = API_USER + "/register";
+    private static final String COMPLETE_URL = API_USER + "/complete";
 
+    @Autowired
+    private EnvironmentServer env;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private SystemService systemService;
     @Autowired
     private CitizenService citizenService;
     @Autowired
@@ -54,21 +61,24 @@ class UserControllerTest {
 
 
     private Citizen adultActive;
+    private Citizen vaccineValid;
+    private Citizen vaccineNotValid;
+    private Citizen negativeValid;
+    private Citizen negativeNotValid;
 
     private Address address;
     private CitizenData citizen;
 
-    @Test
-    void injectedComponentsAreNotNull() {
+    @BeforeAll
+    void beforeAll() {
+        assertNotNull(env);
         assertNotNull(mockMvc);
         assertNotNull(objectMapper);
+        assertNotNull(systemService);
         assertNotNull(citizenService);
         assertNotNull(addressService);
         assertNotNull(licenseService);
-    }
 
-    @BeforeAll
-    void before() {
         address = addressService.createOrGetAddress("h8s3dac2", "39fafaef0 rue William-Macdonald", "Lachinafsfeeae", "qafefsc", "13");
 
         adultActive = new Citizen();
@@ -82,8 +92,28 @@ class UserControllerTest {
         adultActive.setNoAssuranceMaladie("aaaa00001111");
         adultActive.setAddress(address);
 
+        citizenService.addOrUpdate(adultActive);
 
-        citizenService.add(adultActive);
+        CitizenData citizenData = new CitizenData();
+        citizenData.setPassword(DEFAULT_PASSWORD);
+        citizenData.setPhone("313-312-3212");
+
+        citizenData.setEmail("vaccineValid@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112235");
+        vaccineValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
+        citizenData.setEmail("vaccineNotValid@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112221");
+        vaccineNotValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
+        citizenData.setEmail("negativeValid@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112232");
+        negativeValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
+        citizenData.setEmail("negativeNotValid@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112233");
+        negativeNotValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
     }
 
 
@@ -91,16 +121,7 @@ class UserControllerTest {
     void setUp() {
         citizen = new CitizenData();
         citizen.setPassword("password");
-        citizen.setFirstName("firstname");
-        citizen.setLastName("lastname");
-        citizen.setSex(Sex.MALE);
         citizen.setPhone("412-131-3131");
-        citizen.setAddress(address);
-    }
-
-    @AfterEach
-    void afterEach() {
-        licenseService.deleteAll();
     }
 
     @Test
@@ -112,7 +133,7 @@ class UserControllerTest {
                         .param(PARAM_EMAIL, adultActive.getEmail())
                         .param(PARAM_PASSWORD, adultActive.getPassword()))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.id").exists())
                 .andReturn();
     }
 
@@ -128,320 +149,237 @@ class UserControllerTest {
                         .param(PARAM_EMAIL, email)
                         .param(PARAM_PASSWORD, password))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.id").doesNotExist())
+                .andExpect(jsonPath("$.id").doesNotExist())
                 .andDo(print());
 
     }
 
     @Test
-    void registerNegativeTest() throws Exception {
+    void register() throws Exception {
         citizen.setEmail("u3@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa00001113");
-        citizen.setBirth(LocalDate.now().minusYears(67));
+        citizen.setNoAssuranceMaladie("eeee11112222");
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
+                post(REGISTER_URL)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string(RESPONSE_MESSAGE_USER_CREATED))
-                .andDo(print());
+                .andDo(print())
+                .andExpect(jsonPath("$.id").exists());
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore + 1, sizeAfter);
-
-        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-
-        assertNotNull(c);
-        assertEquals(TypeLicense.NegativeTest, c.getLicense().getType());
-        assertEquals(CategoryLicence.Senior, c.getLicense().getCategory());
-
-        citizenService.delete(c);
     }
 
     @Test
-    void registerVaccineTest() throws Exception {
-
-        citizen.setEmail("u4@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa00001114");
-        citizen.setBirth(LocalDate.now().minusYears(55));
-
-        int sizeBefore = citizenService.getNbOfCitizen();
-
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/vaccine")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string(RESPONSE_MESSAGE_USER_CREATED))
-                .andReturn();
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore + 1, sizeAfter);
-
-        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-
-        assertNotNull(c);
-        assertEquals(TypeLicense.Vaccine, c.getLicense().getType());
-        assertEquals(CategoryLicence.Adult, c.getLicense().getCategory());
-
-        citizenService.delete(c);
-
-    }
-
-    @Test
-    void registerNegativeChildrenTest() throws Exception {
-        citizen.setEmail("child1@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa00001115");
-        citizen.setBirth(DEFAULT_BIRTH_CHILD);
-        citizen.setTutor(new LoginData(adultActive.getEmail(), adultActive.getPassword()));
-
-        int sizeBefore = citizenService.getNbOfCitizen();
-
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isOk())
-                .andExpect(MockMvcResultMatchers.content().string(RESPONSE_MESSAGE_USER_CREATED_CHILDREN))
-                .andReturn();
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore + 1, sizeAfter);
-
-        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-
-        assertNotNull(c);
-        assertEquals(TypeLicense.NegativeTest, c.getLicense().getType());
-        assertEquals(CategoryLicence.Children, c.getLicense().getCategory());
-
-        citizenService.delete(c);
-    }
-
-
-    @Test
-    void registerChildrenWithInvalidTutorLogin() throws Exception {
-        citizen.setEmail("child4@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa00001324");
-        citizen.setBirth(DEFAULT_BIRTH_CHILD);
-        citizen.setTutor(new LoginData("NonExistant@bertsa.ca", DEFAULT_PASSWORD));
-
-        int sizeBefore = citizenService.getNbOfCitizen();
-
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore, sizeAfter);
-
-        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-        assertNull(c);
-    }
-
-
-    @Test
-    void registerChildrenWithoutTutor() throws Exception {
-        citizen.setEmail("child2@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa22222222");
-        citizen.setBirth(DEFAULT_BIRTH_CHILD);
-
-        int sizeBefore = citizenService.getNbOfCitizen();
-
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore, sizeAfter);
-
-        Citizen c2 = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-        assertNull(c2);
-    }
-
-    @Test
-    void registerChildrenWithInactiveTutor() throws Exception {
-        Citizen adultInactive = new Citizen();
-        adultInactive.setEmail("u2@bertsa.ca");
-        adultInactive.setPassword(DEFAULT_PASSWORD);
-        adultInactive.setFirstName("firstname");
-        adultInactive.setLastName("lastname");
-        adultInactive.setBirth(LocalDate.now().minusYears(26));
-        adultInactive.setSex(Sex.MALE);
-        adultInactive.setPhone("412-131-3131");
-        adultInactive.setNoAssuranceMaladie("aaaa00001112");
-        adultInactive.setAddress(address);
-        adultInactive.setActive(false);
-
-        Citizen saveInactive = citizenService.add(adultInactive);
-
-        citizen.setEmail("child3@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa33333333");
-        citizen.setBirth(DEFAULT_BIRTH_CHILD);
-        citizen.setTutor(new LoginData(adultInactive.getEmail(), adultInactive.getPassword()));
-
-
-        int sizeBefore = citizenService.getNbOfCitizen();
-
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore, sizeAfter);
-
-        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-        assertNull(c);
-
-        citizenService.delete(saveInactive);
-    }
-
-    @Test
-    void registerNotValidNegativeChildrenTest() throws Exception {
-        Citizen tooYoung = new Citizen();
-        tooYoung.setEmail("tooYoung@bertsa.ca");
-        tooYoung.setPassword(DEFAULT_PASSWORD);
-        tooYoung.setFirstName("firstname");
-        tooYoung.setLastName("lastname");
-        tooYoung.setBirth(LocalDate.now().minusYears(16));
-        tooYoung.setSex(Sex.MALE);
-        tooYoung.setPhone("412-131-3131");
-        tooYoung.setNoAssuranceMaladie("bbbb00001112");
-        tooYoung.setAddress(address);
-
-        Citizen saveTooYoung = citizenService.add(tooYoung);
-
-        citizen.setEmail("child3@bertsa.ca");
-        citizen.setNoAssuranceMaladie("aaaa44444444");
-        citizen.setBirth(DEFAULT_BIRTH_CHILD);
-        citizen.setTutor(new LoginData(tooYoung.getEmail(), tooYoung.getPassword()));
-
-        int sizeBefore = citizenService.getNbOfCitizen();
-
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore, sizeAfter);
-
-        Citizen c = citizenService.findByEmailAndPasswordAndActive(citizen.getEmail(), citizen.getPassword());
-        assertNull(c);
-
-        citizenService.delete(saveTooYoung);
-    }
-
-    @Test
-    void registerEmailAlreadyUsed() throws Exception {
+    void registerBadEmail() throws Exception {
         citizen.setEmail(adultActive.getEmail());
-        citizen.setNoAssuranceMaladie("dadw123212214");
-        citizen.setBirth(LocalDate.now().minusYears(35));
-
-        assertNotNull(citizenService.findByEmail(citizen.getEmail()));
+        citizen.setNoAssuranceMaladie("eeee11112220");
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
+                post(REGISTER_URL)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andDo(print());
-
-        int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore, sizeAfter);
-
-        assertNotNull(citizenService.findByEmail(adultActive.getEmail()));
-    }
-
-    @Test
-    void registerEmailNotValid() throws Exception {
-        citizen.setEmail("not an email");
-        citizen.setNoAssuranceMaladie("dadw12321221");
-        citizen.setBirth(LocalDate.now().minusYears(67));
-        int sizeBefore = citizenService.getNbOfCitizen();
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(citizen)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
+                .andExpect(jsonPath("$").value(env.messageErrorEmail));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 
     @Test
-    void registerNoAssuranceMaladieAlreadyUsed() throws Exception {
-        citizen.setEmail("freeEmail@bertsa.ca");
+    void registerBadNassmAlreadyExist() throws Exception {
+        citizen.setEmail("u5@bertsa.ca");
         citizen.setNoAssuranceMaladie(adultActive.getNoAssuranceMaladie());
-        citizen.setBirth(LocalDate.now().minusYears(59));
-
-        assertNotNull(citizenService.findByNoAssuranceMaladie(citizen.getNoAssuranceMaladie()));
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
+                post(REGISTER_URL)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andDo(print());
+                .andExpect(jsonPath("$").value(env.messageErrorNassm));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 
     @Test
-    void registerNoAssuranceMaladieTooShort() throws Exception {
-        citizen.setEmail("freeEmail2@bertsa.ca");
-        citizen.setNoAssuranceMaladie("dadd0000111");
-        citizen.setBirth(LocalDate.now().minusYears(58));
+    void registerBadNassmNotInMinistere() throws Exception {
+        citizen.setEmail("u6@bertsa.ca");
+        citizen.setNoAssuranceMaladie("dddd11113333");
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
+                post(REGISTER_URL)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andDo(print());
+                .andExpect(jsonPath("$").value(env.messageErrorNassm));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
     }
 
     @Test
-    void registerNoAssuranceMaladieTooLong() throws Exception {
-        citizen.setEmail("freeEmail2@bertsa.ca");
-        citizen.setNoAssuranceMaladie("dadd000011112");
-        citizen.setBirth(LocalDate.now().minusYears(58));
+    void registerChildOnAdultRegister() throws Exception {
+        citizen.setEmail("c1@bertsa.ca");
+        citizen.setNoAssuranceMaladie("eeee11112231");
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
-        this.mockMvc.perform(
-                MockMvcRequestBuilders.post(REGISTER_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON)
+        MvcResult mvcResult1 = this.mockMvc.perform(
+                post(REGISTER_URL)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andReturn();
+
+        Citizen child = objectMapper.readValue(mvcResult1.getResponse().getContentAsString(), Citizen.class);
+
+        child.setAddress(address);
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(child)))
                 .andExpect(status().isBadRequest())
-                .andDo(print());
+                .andExpect(jsonPath("$").value(env.messageErrorTutor));
 
         int sizeAfter = citizenService.getNbOfCitizen();
-        assertEquals(sizeBefore, sizeAfter);
+        assertEquals(sizeBefore + 1, sizeAfter);
+    }
+
+
+    @Test
+    void completeValidNegative() throws Exception {
+        CitizenData citizenData = new CitizenData();
+        citizenData.setPassword(DEFAULT_PASSWORD);
+        citizenData.setPhone("313-312-3212");
+        citizenData.setEmail("u45@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112226");
+        Citizen negative = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
+        assertNotNull(negative);
+
+        negative.setAddress(address);
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(negative)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.license").exists())
+                .andExpect(jsonPath("$.license.type").value(Negative_Test.toString()));
+    }
+
+    @Test
+    void completeValidVaccine() throws Exception {
+        CitizenData citizenData = new CitizenData();
+        citizenData.setPassword(DEFAULT_PASSWORD);
+        citizenData.setPhone("313-312-3212");
+        citizenData.setEmail("u46@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112227");
+        Citizen vaccine = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
+        assertNotNull(vaccine);
+
+        vaccine.setAddress(address);
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/vaccine")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(vaccine)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.license").exists())
+                .andExpect(jsonPath("$.license.type").value(Vaccine.toString()));
+    }
+
+    @Test
+    void completeValidNegativeButNotValidAddress() throws Exception {
+
+        negativeValid.setAddress(null);
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(negativeValid)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(env.messageErrorAddress));
+    }
+
+    @Test
+    void completeValidNegativeButAlreadyCompleted() throws Exception {
+        CitizenData citizenData = new CitizenData();
+        citizenData.setPassword(DEFAULT_PASSWORD);
+        citizenData.setPhone("313-312-3212");
+        citizenData.setEmail("u45@bertsa.ca");
+        citizenData.setNoAssuranceMaladie("eeee11112229");
+        Citizen negative = (Citizen) systemService.registerCitizen(citizenData).getBody();
+
+        assertNotNull(negative);
+
+        negative.setAddress(address);
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(negative)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.license").exists())
+                .andExpect(jsonPath("$.license.type").value(Negative_Test.toString()));
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(negative)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(env.messageErrorAlreadyCompleted));
+    }
+
+    @Test
+    void completeButNotValid() throws Exception {
+
+        negativeNotValid.setAddress(address);
+        vaccineNotValid.setAddress(address);
+        vaccineValid.setAddress(address);
+        negativeValid.setAddress(address);
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(negativeNotValid)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Negative_Test));
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/vaccine")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(vaccineNotValid)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Vaccine));
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/negative")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(vaccineValid)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Negative_Test));
+
+        this.mockMvc.perform(
+                post(COMPLETE_URL + "/vaccine")
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(negativeValid)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Vaccine));
     }
 
 }

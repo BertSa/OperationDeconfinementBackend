@@ -1,6 +1,7 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.controllers;
 
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.SystemService;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
@@ -25,15 +26,19 @@ public class UserController {
     }
 
     @CrossOrigin
-    @PostMapping("/register/negative")
-    public ResponseEntity<String> registerNegativeTest(@RequestBody @Valid CitizenData user) throws Exception {
-        return systemService.registerCitizen(user, TypeLicense.NegativeTest);
+    @PostMapping("/register")
+    public ResponseEntity<Object> register(@RequestBody @Valid CitizenData user) throws Exception {
+        return systemService.registerCitizen(user);
     }
-
     @CrossOrigin
-    @PostMapping("/register/vaccine")
-    public ResponseEntity<String> registerVaccine(@RequestBody @Valid CitizenData user) throws Exception {
-        return systemService.registerCitizen(user, TypeLicense.Vaccine);
+    @PostMapping("/complete/vaccine")
+    public ResponseEntity<Object> completeInformationVaccine(@RequestBody @Valid Citizen user) throws Exception {
+        return systemService.completeCitizen(user, TypeLicense.Vaccine);
+    }
+    @CrossOrigin
+    @PostMapping("/complete/negative")
+    public ResponseEntity<Object> completeInformationNegative(@RequestBody @Valid Citizen user) throws Exception {
+        return systemService.completeCitizen(user, TypeLicense.Negative_Test);
     }
 
 

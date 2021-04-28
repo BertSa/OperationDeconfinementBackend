@@ -1,8 +1,6 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Address;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
@@ -33,13 +31,19 @@ import java.nio.file.Path;
 
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.*;
 import static com.google.zxing.BarcodeFormat.QR_CODE;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
 
 
 @Service
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 public class SystemService {
+
     private static final String IMAGE_FORMAT = "PNG";
 
+    @Autowired
+    private EnvironmentServer env;
     @Autowired
     private JavaMailSender mailSender;
     @Autowired
@@ -47,14 +51,12 @@ public class SystemService {
     @Autowired
     private CitizenService citizenService;
     @Autowired
-    private AddressService addressService;
-    @Autowired
     private LicenseService licenseService;
+    @Autowired
+    private AddressService addressService;
 
     public User login(String email, String password) {
-        User user = adminService.findByEmailAndPasswordAndActive(email, password);
-        if (user == null)
-            user = citizenService.findByEmailAndPasswordAndActive(email, password);
+        Citizen user = citizenService.findByEmailAndPasswordAndActive(email, password);
         return user;
     }
 
@@ -62,20 +64,38 @@ public class SystemService {
         return citizenService.findByEmail(email) != null || adminService.findByEmail(email) != null;
     }
 
-    public ResponseEntity<String> registerCitizen(CitizenData user, TypeLicense typeLicense) throws Exception {
-        Address address = addressService.createOrGetAddress(
-                user.getAddress().getZipCode(),
-                user.getAddress().getStreet(),
-                user.getAddress().getCity(),
-                user.getAddress().getProvince(),
-                user.getAddress().getApt());
+    public ResponseEntity<Object> registerCitizen(CitizenData user) {
+        if (citizenService.isEmailAlreadyTaken(user.getEmail()))
+            return status(BAD_REQUEST).body(env.messageErrorEmail);
+        if (citizenService.isNoAssuranceMaladieNotValid(user.getNoAssuranceMaladie()))
+            return status(BAD_REQUEST).body(env.messageErrorNassm);
+        if (user.getPhone() == null)
+            return status(BAD_REQUEST).body(env.messageErrorPhone);
 
-        License licenseCreated = licenseService.createLicenseAtRegister(typeLicense, user.getBirth());
-        Citizen save1 = citizenService.register(user, address, licenseCreated);
-//        sendEmail(user.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + licenseCreated.getId());//TODO Dans un thread?
-        return ResponseEntity.ok((save1.getTutor() != null) ? RESPONSE_MESSAGE_USER_CREATED_CHILDREN : RESPONSE_MESSAGE_USER_CREATED);
+        Citizen citizenInfo = citizenService.getCitizenInfo(user.getNoAssuranceMaladie());
+        if (citizenInfo == null)
+            return status(BAD_REQUEST).body(env.messageErrorOther);
+
+        return ok(citizenService.register(user, citizenInfo));
     }
 
+    public ResponseEntity<Object> completeCitizen(Citizen data, TypeLicense type) throws Exception {
+        Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
+        if (user.isProfileCompleted())
+            return status(BAD_REQUEST).body(env.messageErrorAlreadyCompleted);
+        if (data.getAddress() == null)
+            return status(BAD_REQUEST).body(env.messageErrorAddress);
+        if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
+            return status(BAD_REQUEST).body(env.messageErrorNotEligibleForLicense + type);
+        if (licenseService.doesCitizenNeedTutor(user.getBirth()))
+            return status(BAD_REQUEST).body(env.messageErrorTutor);
+
+        user.setAddress(addressService.createOrGetAddress(data.getAddress()));
+        user.setLicense(licenseService.createLicenseAtRegister(type, user.getBirth()));
+        user.setProfileCompleted(true);
+//            sendEmail(user.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + user.getLicense().getId());//TODO Dans un thread?
+        return ok(citizenService.addOrUpdate(user));
+    }
 
     public void generateQR(String data, String subDirectory) throws Exception {
         createDirectoriesIfDontExists(subDirectory);
@@ -124,6 +144,5 @@ public class SystemService {
         mailSender.send(message);
 
     }
-
 
 }

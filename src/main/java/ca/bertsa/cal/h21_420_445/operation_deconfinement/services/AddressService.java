@@ -13,13 +13,17 @@ public class AddressService {
     @Autowired
     private AddressRepository addressRepository;
 
-    public Address createOrGetAddress(String zipCode, String street, String city, String province, @Nullable String apt) {
-        Address address = addressRepository.findAddressByZipCodeIgnoreCaseAndStreetIgnoreCaseAndCityIgnoreCaseAndProvinceIgnoreCaseAndApt(zipCode, street, city, province, apt);
-        if (address != null) {
-            return address;
+
+    public Address createOrGetAddress(Address address) {
+        Address addressFromDB = addressRepository.findAddressByZipCodeIgnoreCaseAndStreetIgnoreCaseAndCityIgnoreCaseAndProvinceIgnoreCaseAndApt(address.getZipCode(), address.getStreet(), address.getCity(), address.getProvince(), address.getApt());
+        if (addressFromDB != null) {
+            return addressFromDB;
         }
-        address = new Address(zipCode, street, city, province, apt);
-        return addressRepository.save(address);
+        addressFromDB = new Address(address.getZipCode(), address.getStreet(), address.getCity(), address.getProvince(), address.getApt());
+        return addressRepository.save(addressFromDB);
     }
 
+    public Address createOrGetAddress(String zipCode, String street, String city, String province, @Nullable String apt) {
+        return createOrGetAddress(new Address(zipCode, street, city, province, apt));
+    }
 }

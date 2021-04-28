@@ -23,20 +23,20 @@ public class Citizen extends User implements Serializable {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Sex sex;
+    private LocalDate dateJoined;
+
     @Column(nullable = false)
     private String phone;
     @ManyToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn
     private Address address;
     @OneToOne
     private License license;
-    private LocalDate dateJoined;
-    @ManyToOne
-    private Citizen tutor;
+    private boolean profileCompleted=false;
+
 
 
     public Citizen() {
-        super();
         dateJoined = LocalDate.now();
     }
 }

@@ -12,10 +12,6 @@ public class AdminService {
     @Autowired
     private AdminRepository adminRepository;
 
-    public Admin findByEmailAndPasswordAndActive(String email, String password) {
-        return adminRepository.findByEmailAndPasswordAndActive(email, password, true);
-    }
-
     public Admin findByEmail(String email) {
         return adminRepository.findByEmailIgnoreCase(email);
     }

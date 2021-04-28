@@ -14,9 +14,5 @@ public interface Consts {
     short QR_CODE_WIDTH = 300;
     short QR_CODE_HEIGHT = 300;
 
-    String EMAIL_ALREADY_USED = "There is already user with this email!";
-    String NAM_ALREADY_USED = "There is already user with this noAssuranceMaladie!";
     byte NAM_LENGTH = 12;
-    String RESPONSE_MESSAGE_USER_CREATED_CHILDREN = "Children created";
-    String RESPONSE_MESSAGE_USER_CREATED = "Citizen created";
 }

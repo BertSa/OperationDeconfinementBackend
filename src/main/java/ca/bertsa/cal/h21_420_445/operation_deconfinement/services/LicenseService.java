@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License.getCategoryFromBirth;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence.Children;
+
 @Service
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 public class LicenseService {
@@ -31,7 +34,7 @@ public class LicenseService {
         return save;
     }
 
-    public void deleteAll() {
-        this.licenseRepository.deleteAll();
+    public boolean doesCitizenNeedTutor(LocalDate birth) {
+        return getCategoryFromBirth(birth).equals(Children);
     }
 }

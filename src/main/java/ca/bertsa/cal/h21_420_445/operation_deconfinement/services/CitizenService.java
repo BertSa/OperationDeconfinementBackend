@@ -1,20 +1,26 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Address;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.EnvironmentServer;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.CitizenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import javax.validation.constraints.Email;
 import java.time.LocalDate;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.NAM_LENGTH;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.TUTOR_MINIMUM_AGE;
 
 @Service
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 public class CitizenService {
+    @Autowired
+    private EnvironmentServer env;
     @Autowired
     private CitizenRepository citizenRepository;
 
@@ -22,7 +28,7 @@ public class CitizenService {
         return citizenRepository.findByEmailIgnoreCaseAndPasswordAndActiveAndBirthBefore(email, password, true, LocalDate.now().minusYears(TUTOR_MINIMUM_AGE).plusDays(1)) != null;
     }
 
-    public Citizen add(Citizen adultActive) {
+    public Citizen addOrUpdate(Citizen adultActive) {
         return citizenRepository.save(adultActive);
     }
 
@@ -38,36 +44,52 @@ public class CitizenService {
         return citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive(email, password, true);
     }
 
-    public void delete(Citizen c) {
-        citizenRepository.delete(c);
-    }
 
     public Citizen findByEmail(String email) {
         return citizenRepository.findByEmailIgnoreCase(email);
     }
 
-    public Citizen findByNoAssuranceMaladie(String noAssuranceMaladie) {
-        return citizenRepository.findByNoAssuranceMaladieIgnoreCase(noAssuranceMaladie);
-    }
-
-    public Citizen register(CitizenData user, Address save, License licenseCreated) {
+    public Citizen register(CitizenData user, Citizen infoFromMinistere) {
         Citizen userCreated = new Citizen();
         userCreated.setEmail(user.getEmail());
         userCreated.setPassword(user.getPassword());
-        userCreated.setLastName(user.getLastName());
-        userCreated.setFirstName(user.getFirstName());
         userCreated.setNoAssuranceMaladie(user.getNoAssuranceMaladie());
         userCreated.setPhone(user.getPhone());
-        userCreated.setBirth(user.getBirth());
-        userCreated.setAddress(save);
-        userCreated.setSex(user.getSex());
-        userCreated.setLicense(licenseCreated);
-        if (user.getTutor() != null)
-            userCreated.setTutor(findByEmailAndPassword(user.getTutor().getEmail(), user.getTutor().getPassword()));
-        return add(userCreated);
+
+        userCreated.setLastName(infoFromMinistere.getLastName());
+        userCreated.setFirstName(infoFromMinistere.getFirstName());
+        userCreated.setBirth(infoFromMinistere.getBirth());
+        userCreated.setSex(infoFromMinistere.getSex());
+
+        return addOrUpdate(userCreated);
     }
 
-    public boolean isNoAssuranceMaladieExist(String value) {
-        return findByNoAssuranceMaladie(value) != null;
+    public boolean isNoAssuranceMaladieNotValid(String nassm) {
+        if (citizenRepository.findByNoAssuranceMaladieIgnoreCase(nassm) != null)
+            return true;
+        if (nassm.length() != NAM_LENGTH)
+            return true;
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/exist/" + nassm, Boolean.class);
+        Boolean body = responseEntity.getBody();
+        return body == null || !body;
+    }
+
+    public boolean isNotEligibleForLicense(TypeLicense typeValidation, String input) {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/validate/" + typeValidation.toString().toLowerCase() + "/" + input, Boolean.class);
+        Boolean body = responseEntity.getBody();
+        return body == null || !body;
+    }
+
+    public Citizen getCitizenInfo(String nassm) {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Citizen> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/info/" + nassm, Citizen.class);
+
+        return responseEntity.getBody();
+    }
+
+    public boolean isEmailAlreadyTaken(@Email String email) {
+        return findByEmail(email) != null;
     }
 }

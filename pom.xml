@@ -89,6 +89,7 @@
             <artifactId>spring-boot-starter-validation</artifactId>
             <version>2.3.9.RELEASE</version>
         </dependency>
+
     </dependencies>
 
     <build>

@@ -24,6 +24,8 @@ public class License implements Serializable {
     private CategoryLicence category;
     private final LocalDate dateCreation;
     private LocalDate dateExpire;
+    @ManyToOne
+    private Citizen tutor;
 
 
     public License() {
@@ -31,22 +33,25 @@ public class License implements Serializable {
     }
 
     public void setCategory(LocalDate birth) {
-        if (birth.isBefore(LocalDate.now().minusYears(SENIOR_AGE).plusDays(1))) {
-            category = CategoryLicence.Senior;
-        } else if (birth.isBefore(LocalDate.now().minusYears(ADULT_AGE).plusDays(1))) {
-            category = CategoryLicence.Adult;
-        } else if (birth.isBefore(LocalDate.now().minusYears(YOUNG_ADULT_AGE).plusDays(1))) {
-            category = CategoryLicence.YoungAdult;
-        } else {
-            category = CategoryLicence.Children;
-        }
+        category = getCategoryFromBirth(birth);
+    }
+
+    public static CategoryLicence getCategoryFromBirth(LocalDate birth) {
+        if (birth.isBefore(LocalDate.now().minusYears(SENIOR_AGE).plusDays(1))) return CategoryLicence.Senior;
+        if (birth.isBefore(LocalDate.now().minusYears(ADULT_AGE).plusDays(1))) return CategoryLicence.Adult;
+        if (birth.isBefore(LocalDate.now().minusYears(YOUNG_ADULT_AGE).plusDays(1))) return CategoryLicence.YoungAdult;
+        if (birth.isBefore(LocalDate.now())) return CategoryLicence.Children;
+
+        throw new RuntimeException("Birth invalid!");
     }
 
     public void setType(TypeLicense type) {
         this.type = Objects.requireNonNull(type);
-        if (type == TypeLicense.NegativeTest) {
+        if (type == TypeLicense.Negative_Test) {
             dateExpire = LocalDate.now().plusDays(NEGATIVE_TEST_DURATION);
         }
 
     }
+
+
 }
