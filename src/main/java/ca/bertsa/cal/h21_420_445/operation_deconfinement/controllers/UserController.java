@@ -27,7 +27,7 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping("/register")
-    public ResponseEntity<Object> register(@RequestBody @Valid CitizenData user) throws Exception {
+    public ResponseEntity<Object> register(@RequestBody @Valid CitizenData user) {
         return systemService.registerCitizen(user);
     }
     @CrossOrigin

@@ -6,7 +6,6 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.Sex;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.time.LocalDate;
 
