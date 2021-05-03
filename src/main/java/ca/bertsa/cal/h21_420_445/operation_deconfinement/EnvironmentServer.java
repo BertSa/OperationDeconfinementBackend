@@ -11,8 +11,6 @@ public class EnvironmentServer {
 
     @Value("${bertsa.messages.error.email}")
     public String messageErrorEmail;
-    @Value("${bertsa.messages.error.nassm}")
-    public String messageErrorNassm;
     @Value("${bertsa.messages.error.other}")
     public String messageErrorOther;
     @Value("${bertsa.messages.error.address}")
@@ -25,6 +23,16 @@ public class EnvironmentServer {
     public String messageErrorTutor;
     @Value("${bertsa.messages.error.not_eligible_for_license}")
     public String messageErrorNotEligibleForLicense;
+
+    @Value("bertsa.error.nassm.noexist")
+    public String messageErrorNassmDoesntExist;
+    @Value("bertsa.error.nassm.registered")
+    public String messageErrorNassmRegistered;
+    @Value("bertsa.error.nassm.invalid")
+    public String messageErrorNassmInvalid;
+    @Value("bertsa.error.nassm.isnull")
+    public String messageErrorNassmIsNull;
+
 
 
 }

@@ -185,7 +185,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorEmail));
+                .andExpect(jsonPath("$.details").value(env.messageErrorEmail));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
@@ -203,7 +203,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorNassm));
+                .andExpect(jsonPath("$.details").value(env.messageErrorNassmRegistered));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
@@ -221,7 +221,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorNassm));
+                .andExpect(jsonPath("$.details").value(env.messageErrorNassmDoesntExist));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
@@ -250,7 +250,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(child)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorTutor));
+                .andExpect(jsonPath("$.details").value(env.messageErrorTutor));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore + 1, sizeAfter);
@@ -313,7 +313,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negativeValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorAddress));
+                .andExpect(jsonPath("$.details").value(env.messageErrorAddress));
     }
 
     @Test
@@ -343,7 +343,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorAlreadyCompleted));
+                .andExpect(jsonPath("$.details").value(env.messageErrorAlreadyCompleted));
     }
 
     @Test
@@ -359,27 +359,27 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negativeNotValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Negative_Test));
+                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Negative_Test));
         this.mockMvc.perform(
                 post(COMPLETE_URL + "/vaccine")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(vaccineNotValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Vaccine));
+                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Vaccine));
 
         this.mockMvc.perform(
                 post(COMPLETE_URL + "/negative")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(vaccineValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Negative_Test));
+                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Negative_Test));
 
         this.mockMvc.perform(
                 post(COMPLETE_URL + "/vaccine")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negativeValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$").value(env.messageErrorNotEligibleForLicense + Vaccine));
+                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Vaccine));
     }
 
 }

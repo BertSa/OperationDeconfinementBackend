@@ -5,10 +5,12 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.exceptions.CustomExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.annotation.HandlesTypes;
 import javax.validation.Valid;
 
 @RestController

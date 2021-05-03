@@ -4,6 +4,7 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.exceptions.BertsaException;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AddressService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AdminService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
@@ -56,8 +57,7 @@ public class SystemService {
     private AddressService addressService;
 
     public User login(String email, String password) {
-        Citizen user = citizenService.findByEmailAndPasswordAndActive(email, password);
-        return user;
+        return citizenService.findByEmailAndPasswordAndActive(email, password);
     }
 
     public boolean isLoginExist(String email) {
@@ -65,16 +65,9 @@ public class SystemService {
     }
 
     public ResponseEntity<Object> registerCitizen(CitizenData user) {
-        if (citizenService.isEmailAlreadyTaken(user.getEmail()))
-            return status(BAD_REQUEST).body(env.messageErrorEmail);
-        if (citizenService.isNoAssuranceMaladieNotValid(user.getNoAssuranceMaladie()))
-            return status(BAD_REQUEST).body(env.messageErrorNassm);
-        if (user.getPhone() == null)
-            return status(BAD_REQUEST).body(env.messageErrorPhone);
-
         Citizen citizenInfo = citizenService.getCitizenInfo(user.getNoAssuranceMaladie());
         if (citizenInfo == null)
-            return status(BAD_REQUEST).body(env.messageErrorOther);
+            throw new BertsaException(env.messageErrorOther);
 
         return ok(citizenService.register(user, citizenInfo));
     }
@@ -82,13 +75,13 @@ public class SystemService {
     public ResponseEntity<Object> completeCitizen(Citizen data, TypeLicense type) throws Exception {
         Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
         if (user.isProfileCompleted())
-            return status(BAD_REQUEST).body(env.messageErrorAlreadyCompleted);
+            throw new BertsaException(env.messageErrorAlreadyCompleted);
         if (data.getAddress() == null)
-            return status(BAD_REQUEST).body(env.messageErrorAddress);
+            throw new BertsaException(env.messageErrorAddress);
         if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
-            return status(BAD_REQUEST).body(env.messageErrorNotEligibleForLicense + type);
+            throw new BertsaException(env.messageErrorNotEligibleForLicense + type);
         if (licenseService.doesCitizenNeedTutor(user.getBirth()))
-            return status(BAD_REQUEST).body(env.messageErrorTutor);
+            throw new BertsaException(env.messageErrorTutor);
 
         user.setAddress(addressService.createOrGetAddress(data.getAddress()));
         user.setLicense(licenseService.createLicenseAtRegister(type, user.getBirth()));

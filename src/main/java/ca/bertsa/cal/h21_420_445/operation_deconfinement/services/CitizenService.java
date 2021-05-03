@@ -64,15 +64,14 @@ public class CitizenService {
         return addOrUpdate(userCreated);
     }
 
-    public boolean isNoAssuranceMaladieNotValid(String nassm) {
-        if (citizenRepository.findByNoAssuranceMaladieIgnoreCase(nassm) != null)
-            return true;
-        if (nassm.length() != NAM_LENGTH)
-            return true;
+    public boolean isNASSMAlreadyRegistered(String nassm) {
+        return citizenRepository.findByNoAssuranceMaladieIgnoreCase(nassm) != null;
+    }
+    public boolean doesNASSMExistMinistere(String nassm){
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/exist/" + nassm, Boolean.class);
         Boolean body = responseEntity.getBody();
-        return body == null || !body;
+        return body != null && body;
     }
 
     public boolean isNotEligibleForLicense(TypeLicense typeValidation, String input) {
