@@ -1,7 +1,5 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.controllers;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.EnvironmentServer;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.SystemService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Address;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
@@ -9,6 +7,7 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.Sex;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AddressService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.LicenseService;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.SystemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,8 +23,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDate;
 
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.Negative_Test;
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.Vaccine;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.NEGATIVETEST;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.VACCINE;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -45,8 +45,6 @@ class UserControllerTest {
     private static final String COMPLETE_URL = API_USER + "/complete";
 
     @Autowired
-    private EnvironmentServer env;
-    @Autowired
     private MockMvc mockMvc;
     @Autowired
     private ObjectMapper objectMapper;
@@ -62,16 +60,13 @@ class UserControllerTest {
 
     private Citizen adultActive;
     private Citizen vaccineValid;
-    private Citizen vaccineNotValid;
     private Citizen negativeValid;
-    private Citizen negativeNotValid;
 
     private Address address;
     private CitizenData citizen;
 
     @BeforeAll
     void beforeAll() {
-        assertNotNull(env);
         assertNotNull(mockMvc);
         assertNotNull(objectMapper);
         assertNotNull(systemService);
@@ -100,19 +95,12 @@ class UserControllerTest {
 
         citizenData.setEmail("vaccineValid@bertsa.ca");
         citizenData.setNoAssuranceMaladie("eeee11112235");
-        vaccineValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
+        vaccineValid = systemService.registerCitizen(citizenData, VACCINE).getBody();
 
-        citizenData.setEmail("vaccineNotValid@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112221");
-        vaccineNotValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
 
         citizenData.setEmail("negativeValid@bertsa.ca");
         citizenData.setNoAssuranceMaladie("eeee11112232");
-        negativeValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
-
-        citizenData.setEmail("negativeNotValid@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112233");
-        negativeNotValid = (Citizen) systemService.registerCitizen(citizenData).getBody();
+        negativeValid = systemService.registerCitizen(citizenData, NEGATIVETEST).getBody();
 
     }
 
@@ -162,7 +150,7 @@ class UserControllerTest {
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                post(REGISTER_URL)
+                post(REGISTER_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isOk())
@@ -181,11 +169,11 @@ class UserControllerTest {
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                post(REGISTER_URL)
+                post(REGISTER_URL + "/" + VACCINE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorEmail));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_EMAIL));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
@@ -199,11 +187,11 @@ class UserControllerTest {
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                post(REGISTER_URL)
+                post(REGISTER_URL + "/" + VACCINE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorNassmRegistered));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_NASSM_REGISTERED));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
@@ -217,11 +205,11 @@ class UserControllerTest {
         int sizeBefore = citizenService.getNbOfCitizen();
 
         this.mockMvc.perform(
-                post(REGISTER_URL)
+                post(REGISTER_URL + "/" + VACCINE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorNassmDoesntExist));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_NASSM_DOESNT_EXIST));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore, sizeAfter);
@@ -235,7 +223,7 @@ class UserControllerTest {
         int sizeBefore = citizenService.getNbOfCitizen();
 
         MvcResult mvcResult1 = this.mockMvc.perform(
-                post(REGISTER_URL)
+                post(REGISTER_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(citizen)))
                 .andExpect(status().isOk())
@@ -246,11 +234,11 @@ class UserControllerTest {
 
         child.setAddress(address);
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
+                post(COMPLETE_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(child)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorTutor));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_TUTOR));
 
         int sizeAfter = citizenService.getNbOfCitizen();
         assertEquals(sizeBefore + 1, sizeAfter);
@@ -264,20 +252,20 @@ class UserControllerTest {
         citizenData.setPhone("313-312-3212");
         citizenData.setEmail("u45@bertsa.ca");
         citizenData.setNoAssuranceMaladie("eeee11112226");
-        Citizen negative = (Citizen) systemService.registerCitizen(citizenData).getBody();
+        Citizen negative = systemService.registerCitizen(citizenData, NEGATIVETEST).getBody();
 
         assertNotNull(negative);
 
         negative.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
+                post(COMPLETE_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.license").exists())
-                .andExpect(jsonPath("$.license.type").value(Negative_Test.toString()));
+                .andExpect(jsonPath("$.license.type").value(NEGATIVETEST.toString()));
     }
 
     @Test
@@ -287,20 +275,20 @@ class UserControllerTest {
         citizenData.setPhone("313-312-3212");
         citizenData.setEmail("u46@bertsa.ca");
         citizenData.setNoAssuranceMaladie("eeee11112227");
-        Citizen vaccine = (Citizen) systemService.registerCitizen(citizenData).getBody();
+        Citizen vaccine = systemService.registerCitizen(citizenData, VACCINE).getBody();
 
         assertNotNull(vaccine);
 
         vaccine.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/vaccine")
+                post(COMPLETE_URL + "/" + VACCINE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(vaccine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.license").exists())
-                .andExpect(jsonPath("$.license.type").value(Vaccine.toString()));
+                .andExpect(jsonPath("$.license.type").value(VACCINE.toString()));
     }
 
     @Test
@@ -309,11 +297,11 @@ class UserControllerTest {
         negativeValid.setAddress(null);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
+                post(COMPLETE_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negativeValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorAddress));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_ADDRESS));
     }
 
     @Test
@@ -323,63 +311,48 @@ class UserControllerTest {
         citizenData.setPhone("313-312-3212");
         citizenData.setEmail("u45@bertsa.ca");
         citizenData.setNoAssuranceMaladie("eeee11112229");
-        Citizen negative = (Citizen) systemService.registerCitizen(citizenData).getBody();
+        Citizen negative = systemService.registerCitizen(citizenData, NEGATIVETEST).getBody();
 
         assertNotNull(negative);
 
         negative.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
+                post(COMPLETE_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.license").exists())
-                .andExpect(jsonPath("$.license.type").value(Negative_Test.toString()));
+                .andExpect(jsonPath("$.license.type").value(NEGATIVETEST.toString()));
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
+                post(COMPLETE_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorAlreadyCompleted));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_ALREADY_COMPLETED));
     }
 
     @Test
     void completeButNotValid() throws Exception {
 
-        negativeNotValid.setAddress(address);
-        vaccineNotValid.setAddress(address);
         vaccineValid.setAddress(address);
         negativeValid.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(objectMapper.writeValueAsString(negativeNotValid)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Negative_Test));
-        this.mockMvc.perform(
-                post(COMPLETE_URL + "/vaccine")
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(objectMapper.writeValueAsString(vaccineNotValid)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Vaccine));
-
-        this.mockMvc.perform(
-                post(COMPLETE_URL + "/negative")
+                post(COMPLETE_URL + "/" + NEGATIVETEST)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(vaccineValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Negative_Test));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + NEGATIVETEST));
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/vaccine")
+                post(COMPLETE_URL + "/" + VACCINE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negativeValid)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(env.messageErrorNotEligibleForLicense + Vaccine));
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + VACCINE));
     }
 
 }

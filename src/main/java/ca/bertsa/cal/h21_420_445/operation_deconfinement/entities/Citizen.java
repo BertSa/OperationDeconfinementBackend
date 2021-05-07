@@ -32,8 +32,7 @@ public class Citizen extends User implements Serializable {
     private Address address;
     @OneToOne
     private License license;
-    private boolean profileCompleted=false;
-
+    private boolean profileCompleted = false;
 
 
     public Citizen() {

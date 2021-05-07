@@ -1,14 +1,10 @@
-package ca.bertsa.cal.h21_420_445.operation_deconfinement;
+package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.exceptions.BertsaException;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AddressService;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.AdminService;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.LicenseService;
 import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -30,21 +26,18 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.*;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError.*;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.ServerConst.*;
 import static com.google.zxing.BarcodeFormat.QR_CODE;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.ResponseEntity.ok;
-import static org.springframework.http.ResponseEntity.status;
 
 
-@Service
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
+@Service
 public class SystemService {
 
     private static final String IMAGE_FORMAT = "PNG";
 
-    @Autowired
-    private EnvironmentServer env;
     @Autowired
     private JavaMailSender mailSender;
     @Autowired
@@ -67,7 +60,8 @@ public class SystemService {
     public ResponseEntity<Object> registerCitizen(CitizenData user) {
         Citizen citizenInfo = citizenService.getCitizenInfo(user.getNoAssuranceMaladie());
         if (citizenInfo == null)
-            throw new BertsaException(env.messageErrorOther);
+            throw new BertsaException(MESSAGE_ERROR_OTHER);
+
 
         return ok(citizenService.register(user, citizenInfo));
     }
@@ -75,13 +69,13 @@ public class SystemService {
     public ResponseEntity<Object> completeCitizen(Citizen data, TypeLicense type) throws Exception {
         Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
         if (user.isProfileCompleted())
-            throw new BertsaException(env.messageErrorAlreadyCompleted);
+            throw new BertsaException(MESSAGE_ERROR_ALREADY_COMPLETED);
         if (data.getAddress() == null)
-            throw new BertsaException(env.messageErrorAddress);
+            throw new BertsaException(MESSAGE_ERROR_ADDRESS);
         if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
-            throw new BertsaException(env.messageErrorNotEligibleForLicense + type);
+            throw new BertsaException(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + type);
         if (licenseService.doesCitizenNeedTutor(user.getBirth()))
-            throw new BertsaException(env.messageErrorTutor);
+            throw new BertsaException(MESSAGE_ERROR_TUTOR);
 
         user.setAddress(addressService.createOrGetAddress(data.getAddress()));
         user.setLicense(licenseService.createLicenseAtRegister(type, user.getBirth()));
@@ -138,4 +132,9 @@ public class SystemService {
 
     }
 
+//    public void pdff(){
+//        InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+//
+//        return ResponseEntity.ok().contentLength(file.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
+//    }
 }

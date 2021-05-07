@@ -1,4 +1,4 @@
-package ca.bertsa.cal.h21_420_445.operation_deconfinement;
+package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,5 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.validators.NoAssuranceMaladieValidator;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.validators.UniqueEmailValidator;
 
 import javax.validation.Constraint;

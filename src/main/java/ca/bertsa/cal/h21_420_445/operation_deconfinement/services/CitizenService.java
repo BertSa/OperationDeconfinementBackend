@@ -1,31 +1,29 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.EnvironmentServer;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.CitizenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import javax.validation.constraints.Email;
 import java.time.LocalDate;
 
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.NAM_LENGTH;
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.Consts.TUTOR_MINIMUM_AGE;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.ServerConst.MIN_AGE_TUTOR;
 
-@Service
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
+@Service
 public class CitizenService {
-    @Autowired
-    private EnvironmentServer env;
+    @Value("${bertsa.ministere.url}")
+    private String ministereUrl;
     @Autowired
     private CitizenRepository citizenRepository;
 
     public boolean isCitizenValidTutor(String email, String password) {
-        return citizenRepository.findByEmailIgnoreCaseAndPasswordAndActiveAndBirthBefore(email, password, true, LocalDate.now().minusYears(TUTOR_MINIMUM_AGE).plusDays(1)) != null;
+        return citizenRepository.findByEmailIgnoreCaseAndPasswordAndActiveAndBirthBefore(email, password, true, LocalDate.now().minusYears(MIN_AGE_TUTOR).plusDays(1)) != null;
     }
 
     public Citizen addOrUpdate(Citizen adultActive) {
@@ -65,30 +63,27 @@ public class CitizenService {
     }
 
     public boolean isNASSMAlreadyRegistered(String nassm) {
-        return citizenRepository.findByNoAssuranceMaladieIgnoreCase(nassm) != null;
+        return citizenRepository.existsByNoAssuranceMaladieLike(nassm);
     }
-    public boolean doesNASSMExistMinistere(String nassm){
+
+    public boolean doesNASSMExistMinistere(String nassm) {
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/exist/" + nassm, Boolean.class);
+        ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(ministereUrl + "/exist/" + nassm, Boolean.class);
         Boolean body = responseEntity.getBody();
         return body != null && body;
     }
 
     public boolean isNotEligibleForLicense(TypeLicense typeValidation, String input) {
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/validate/" + typeValidation.toString().toLowerCase() + "/" + input, Boolean.class);
+        ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(ministereUrl + "/validate/" + typeValidation.toString().toLowerCase() + "/" + input, Boolean.class);
         Boolean body = responseEntity.getBody();
         return body == null || !body;
     }
 
     public Citizen getCitizenInfo(String nassm) {
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<Citizen> responseEntity = restTemplate.getForEntity(env.ministereUrl + "/info/" + nassm, Citizen.class);
+        ResponseEntity<Citizen> responseEntity = restTemplate.getForEntity(ministereUrl + "/info/" + nassm, Citizen.class);
 
         return responseEntity.getBody();
-    }
-
-    public boolean isEmailAlreadyTaken(@Email String email) {
-        return findByEmail(email) != null;
     }
 }

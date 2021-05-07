@@ -1,8 +1,8 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.validators;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.EnvironmentServer;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.SystemService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.UniqueEmail;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.SystemService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.ConstraintValidator;
@@ -12,15 +12,12 @@ public class UniqueEmailValidator implements ConstraintValidator<UniqueEmail, St
     @Autowired
     private SystemService userService;
 
-    @Autowired
-    private EnvironmentServer env;
-
     @Override
     public boolean isValid(String email, ConstraintValidatorContext context) {
         boolean flag = true;
         if (email == null || userService.isLoginExist(email)) {
             context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(env.messageErrorEmail)
+            context.buildConstraintViolationWithTemplate(MessagesError.MESSAGE_ERROR_EMAIL)
                     .addConstraintViolation();
             flag = false;
         }

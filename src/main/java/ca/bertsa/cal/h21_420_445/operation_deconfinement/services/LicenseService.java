@@ -1,7 +1,6 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.SystemService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.LicenseRepository;
@@ -10,8 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
-import static ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.License.getCategoryFromBirth;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence.Children;
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence.getCategoryFromBirth;
 
 @Service
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")

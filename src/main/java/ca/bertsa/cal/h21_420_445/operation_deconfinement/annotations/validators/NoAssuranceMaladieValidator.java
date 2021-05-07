@@ -1,18 +1,17 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.validators;
 
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.EnvironmentServer;
-import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.annotations.NoAssuranceMaladie;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.CitizenService;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError.*;
+
 public class NoAssuranceMaladieValidator implements ConstraintValidator<NoAssuranceMaladie, String> {
     @Autowired
     private CitizenService citizenService;
-    @Autowired
-    private EnvironmentServer env;
 
     public void initialize(NoAssuranceMaladie constraint) {
     }
@@ -27,19 +26,19 @@ public class NoAssuranceMaladieValidator implements ConstraintValidator<NoAssura
                     if (citizenService.doesNASSMExistMinistere(nassm)) {
                         flag = true;
                     } else {
-                        context.buildConstraintViolationWithTemplate(env.messageErrorNassmDoesntExist)
+                        context.buildConstraintViolationWithTemplate(MESSAGE_ERROR_NASSM_DOESNT_EXIST)
                                 .addConstraintViolation();
                     }
                 } else {
-                    context.buildConstraintViolationWithTemplate(env.messageErrorNassmRegistered)
+                    context.buildConstraintViolationWithTemplate(MESSAGE_ERROR_NASSM_REGISTERED)
                             .addConstraintViolation();
                 }
             } else {
-                context.buildConstraintViolationWithTemplate(env.messageErrorNassmInvalid)
+                context.buildConstraintViolationWithTemplate(MESSAGE_ERROR_NASSM_INVALID)
                         .addConstraintViolation();
             }
         } else {
-            context.buildConstraintViolationWithTemplate(env.messageErrorNassmIsNull)
+            context.buildConstraintViolationWithTemplate(MESSAGE_ERROR_NASSM_IS_NULL)
                     .addConstraintViolation();
         }
 
