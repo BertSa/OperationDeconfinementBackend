@@ -57,7 +57,9 @@ public class SystemService {
         return citizenService.findByEmail(email) != null || adminService.findByEmail(email) != null;
     }
 
-    public ResponseEntity<Object> registerCitizen(CitizenData user) {
+    public ResponseEntity<Citizen> registerCitizen(CitizenData user,TypeLicense type) {
+        if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
+            throw new BertsaException(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + type);
         Citizen citizenInfo = citizenService.getCitizenInfo(user.getNoAssuranceMaladie());
         if (citizenInfo == null)
             throw new BertsaException(MESSAGE_ERROR_OTHER);
@@ -66,14 +68,13 @@ public class SystemService {
         return ok(citizenService.register(user, citizenInfo));
     }
 
-    public ResponseEntity<Object> completeCitizen(Citizen data, TypeLicense type) throws Exception {
+    public ResponseEntity<Citizen> completeCitizen(Citizen data) throws Exception {
+        TypeLicense type = citizenService.getUserTypeValid(data.getNoAssuranceMaladie());
         Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
         if (user.isProfileCompleted())
             throw new BertsaException(MESSAGE_ERROR_ALREADY_COMPLETED);
         if (data.getAddress() == null)
             throw new BertsaException(MESSAGE_ERROR_ADDRESS);
-        if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
-            throw new BertsaException(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + type);
         if (licenseService.doesCitizenNeedTutor(user.getBirth()))
             throw new BertsaException(MESSAGE_ERROR_TUTOR);
 

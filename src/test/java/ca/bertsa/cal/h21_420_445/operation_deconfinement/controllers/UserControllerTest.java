@@ -234,7 +234,7 @@ class UserControllerTest {
 
         child.setAddress(address);
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + NEGATIVETEST)
+                post(COMPLETE_URL)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(child)))
                 .andExpect(status().isBadRequest())
@@ -259,7 +259,7 @@ class UserControllerTest {
         negative.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + NEGATIVETEST)
+                post(COMPLETE_URL)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isOk())
@@ -282,7 +282,7 @@ class UserControllerTest {
         vaccine.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + VACCINE)
+                post(COMPLETE_URL)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(vaccine)))
                 .andExpect(status().isOk())
@@ -297,7 +297,7 @@ class UserControllerTest {
         negativeValid.setAddress(null);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + NEGATIVETEST)
+                post(COMPLETE_URL)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negativeValid)))
                 .andExpect(status().isBadRequest())
@@ -318,7 +318,7 @@ class UserControllerTest {
         negative.setAddress(address);
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + NEGATIVETEST)
+                post(COMPLETE_URL)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isOk())
@@ -327,32 +327,12 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.license.type").value(NEGATIVETEST.toString()));
 
         this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + NEGATIVETEST)
+                post(COMPLETE_URL)
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
                         .content(objectMapper.writeValueAsString(negative)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_ALREADY_COMPLETED));
     }
 
-    @Test
-    void completeButNotValid() throws Exception {
-
-        vaccineValid.setAddress(address);
-        negativeValid.setAddress(address);
-
-        this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + NEGATIVETEST)
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(objectMapper.writeValueAsString(vaccineValid)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + NEGATIVETEST));
-
-        this.mockMvc.perform(
-                post(COMPLETE_URL + "/" + VACCINE)
-                        .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .content(objectMapper.writeValueAsString(negativeValid)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + VACCINE));
-    }
 
 }

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.lang.reflect.Type;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 @RestController
@@ -26,15 +27,15 @@ public class UserController {
     }
 
     @CrossOrigin
-    @PostMapping("/register")
-    public ResponseEntity<Object> register(@RequestBody @Valid CitizenData user) {
-        return systemService.registerCitizen(user);
+    @PostMapping("/register/{type}")
+    public ResponseEntity<Citizen> register(@PathVariable TypeLicense type, @RequestBody @Valid CitizenData user) {
+        return systemService.registerCitizen(user, type);
     }
 
     @CrossOrigin
-    @PostMapping("/complete/vaccine")
-    public ResponseEntity<Object> completeInformationVaccine(@RequestBody @Valid Citizen user) throws Exception {
-        return systemService.completeCitizen(user, TypeLicense.Vaccine);
+    @PostMapping("/complete")
+    public ResponseEntity<Citizen> completeInformationVaccine( @RequestBody @Valid Citizen user) throws Exception {
+        return systemService.completeCitizen(user);
     }
 
 //    @GetMapping(value = "<ton url>/{email}", produces = MediaType.APPLICATION_PDF_VALUE)

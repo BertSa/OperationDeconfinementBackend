@@ -26,7 +26,7 @@ public class Address implements Serializable {
 
     /**
      * @param zipCode  Postal code
-     * @param apt      Appartement number (When applicable)
+     * @param apt      Appartement number (If applicable)
      * @param street   Street name
      * @param city     City
      * @param province Province

@@ -3,6 +3,8 @@ package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.exceptions.BertsaException;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.repositories.CitizenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError.MESSAGE_ERROR_OTHER;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.ServerConst.MIN_AGE_TUTOR;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
@@ -74,16 +77,26 @@ public class CitizenService {
     }
 
     public boolean isNotEligibleForLicense(TypeLicense typeValidation, String input) {
+
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(ministereUrl + "/validate/" + typeValidation.toString().toLowerCase() + "/" + input, Boolean.class);
         Boolean body = responseEntity.getBody();
         return body == null || !body;
+
     }
 
     public Citizen getCitizenInfo(String nassm) {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Citizen> responseEntity = restTemplate.getForEntity(ministereUrl + "/info/" + nassm, Citizen.class);
 
+        return responseEntity.getBody();
+    }
+
+
+    public TypeLicense getUserTypeValid(String nassm){
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<TypeLicense> responseEntity = restTemplate.getForEntity(ministereUrl + "/type/" + nassm, TypeLicense.class);
+        System.out.println(responseEntity.getBody().toString());
         return responseEntity.getBody();
     }
 }

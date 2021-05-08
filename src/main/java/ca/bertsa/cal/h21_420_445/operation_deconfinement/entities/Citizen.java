@@ -24,7 +24,6 @@ public class Citizen extends User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Sex sex;
     private LocalDate dateJoined;
-
     @Column(nullable = false)
     private String phone;
     @ManyToOne
@@ -33,6 +32,8 @@ public class Citizen extends User implements Serializable {
     @OneToOne
     private License license;
     private boolean profileCompleted = false;
+    @ManyToOne
+    private Citizen tutor;
 
 
     public Citizen() {
