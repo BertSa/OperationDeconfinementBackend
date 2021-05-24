@@ -50,7 +50,10 @@ public class SystemService {
     private AddressService addressService;
 
     public User login(String email, String password) {
-        return citizenService.findByEmailAndPasswordAndActive(email, password);
+        Citizen citizen = citizenService.findByEmailAndPasswordAndActive(email, password);
+        if (citizen==null)
+            throw new BertsaException("EmailOrPasswordInvalid");
+        return citizen;
     }
 
     public boolean isLoginExist(String email) {

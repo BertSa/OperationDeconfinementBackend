@@ -3,6 +3,7 @@ package ca.bertsa.cal.h21_420_445.operation_deconfinement.controllers;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.LoginData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.SystemService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +23,8 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping("/login")
-    public User login(@RequestParam(name = "email") String email, @RequestParam(name = "password") String password) {//TODO CHANGE FOR LoginData?
-        return systemService.login(email, password);
+    public User login(@RequestBody @Valid LoginData data) {//TODO CHANGE FOR LoginData?
+        return systemService.login(data.getEmail(), data.getPassword());
     }
 
     @CrossOrigin
@@ -34,7 +35,7 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping("/complete")
-    public ResponseEntity<Citizen> completeInformationVaccine( @RequestBody @Valid Citizen user) throws Exception {
+    public ResponseEntity<Citizen> completeInformationVaccine(@RequestBody @Valid Citizen user) throws Exception {
         return systemService.completeCitizen(user);
     }
 
