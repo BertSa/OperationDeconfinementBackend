@@ -1,5 +1,6 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Address;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
@@ -51,7 +52,7 @@ public class SystemService {
 
     public User login(String email, String password) {
         Citizen citizen = citizenService.findByEmailAndPasswordAndActive(email, password);
-        if (citizen==null)
+        if (citizen == null)
             throw new BertsaException("EmailOrPasswordInvalid");
         return citizen;
     }
@@ -60,7 +61,7 @@ public class SystemService {
         return citizenService.findByEmail(email) != null || adminService.findByEmail(email) != null;
     }
 
-    public ResponseEntity<Citizen> registerCitizen(CitizenData user,TypeLicense type) {
+    public ResponseEntity<Citizen> registerCitizen(CitizenData user, TypeLicense type) {
         if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
             throw new BertsaException(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + type);
         Citizen citizenInfo = citizenService.getCitizenInfo(user.getNoAssuranceMaladie());
@@ -134,6 +135,25 @@ public class SystemService {
 
         mailSender.send(message);
 
+    }
+
+    public ResponseEntity<Citizen> updatePhone(Citizen data) {
+        Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
+        user.setPhone(data.getPhone());
+        return ok(citizenService.addOrUpdate(user));
+    }
+
+    public ResponseEntity<Citizen> updateAddress(Citizen data) {
+        Address address = addressService.createOrGetAddress(data.getAddress());
+        Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
+        user.setAddress(address);
+        return ok(citizenService.addOrUpdate(user));
+    }
+
+    public ResponseEntity<Citizen> updatePassword(Citizen data) {
+        Citizen user = citizenService.findByEmail(data.getEmail());
+        user.setPassword(data.getPassword());
+        return ok(citizenService.addOrUpdate(user));
     }
 
 //    public void pdff(){

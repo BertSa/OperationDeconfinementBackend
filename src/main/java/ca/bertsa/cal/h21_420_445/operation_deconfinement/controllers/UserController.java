@@ -7,11 +7,11 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.LoginDa
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.SystemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.lang.reflect.Type;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 @RestController
@@ -23,7 +23,7 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping("/login")
-    public User login(@RequestBody @Valid LoginData data) {//TODO CHANGE FOR LoginData?
+    public User login(@RequestBody @Valid LoginData data) {
         return systemService.login(data.getEmail(), data.getPassword());
     }
 
@@ -38,6 +38,17 @@ public class UserController {
     public ResponseEntity<Citizen> completeInformationVaccine(@RequestBody @Valid Citizen user) throws Exception {
         return systemService.completeCitizen(user);
     }
+
+    @CrossOrigin
+    @PostMapping("/update/{field}")
+    public ResponseEntity<Citizen> update(@PathVariable String field, @RequestBody @Valid Citizen user) {
+        if (field.equalsIgnoreCase("phone")) return systemService.updatePhone(user);
+        else if (field.equalsIgnoreCase("address")) return systemService.updateAddress(user);
+        else if (field.equalsIgnoreCase("password")) return systemService.updatePassword(user);
+
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(null);
+    }
+
 
 //    @GetMapping(value = "<ton url>/{email}", produces = MediaType.APPLICATION_PDF_VALUE)
 //    @CrossOrigin

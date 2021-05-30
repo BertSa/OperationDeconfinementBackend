@@ -25,9 +25,6 @@ public class License implements Serializable {
     private CategoryLicence category;
     private final LocalDate dateCreation;
     private LocalDate dateExpire;
-    @ManyToOne
-    private Citizen tutor;
-
 
     public License() {
         dateCreation = LocalDate.now();
