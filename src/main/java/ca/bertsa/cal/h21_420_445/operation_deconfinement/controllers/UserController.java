@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Email;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 @RestController
@@ -49,10 +48,11 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(null);
     }
+
     @CrossOrigin
     @PostMapping("/renew/{type}")
-    public ResponseEntity<Citizen> renew(@PathVariable TypeLicense type,@RequestBody @Valid Citizen user) throws Exception {
-        return systemService.renew(type,user);
+    public ResponseEntity<Citizen> renew(@PathVariable TypeLicense type, @RequestBody @Valid Citizen user) throws Exception {
+        return systemService.renew(type, user);
     }
 
     @CrossOrigin
@@ -70,9 +70,14 @@ public class UserController {
     @CrossOrigin
     @PostMapping("/resetPassword/{token}")
     public ResponseEntity<Citizen> resetPassword(@PathVariable String token, @RequestBody String password) {
-        return systemService.resetPassword(token,password);
+        return systemService.resetPassword(token, password);
     }
 
+    @CrossOrigin
+    @PostMapping("/delete")
+    public ResponseEntity<Boolean> delete( @RequestBody Citizen user) {
+        return systemService.delete(user);
+    }
 //    @GetMapping(value = "<ton url>/{email}", produces = MediaType.APPLICATION_PDF_VALUE)
 //    @CrossOrigin
 //    public ResponseEntity<Resource> pdf(@NotBlank @PathVariable String email) throws FileNotFoundException {

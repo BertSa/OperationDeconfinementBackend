@@ -1,21 +1,15 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models;
 
 import com.sun.istack.NotNull;
-import lombok.Getter;
+import lombok.Data;
 
 import javax.validation.constraints.Email;
 
-@Getter
+@Data
 public class LoginData {
     @NotNull
     @Email
-    private final String email;
+    private String email;
     @NotNull
-    private final String password;
-
-
-    public LoginData(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
+    private String password;
 }

@@ -3,7 +3,9 @@ package ca.bertsa.cal.h21_420_445.operation_deconfinement.entities;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import java.time.LocalDate;
 import java.util.UUID;
 

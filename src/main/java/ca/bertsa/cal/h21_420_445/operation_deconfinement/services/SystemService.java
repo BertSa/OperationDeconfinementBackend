@@ -72,8 +72,6 @@ public class SystemService {
         Citizen citizenInfo = citizenService.getCitizenInfo(user.getNoAssuranceMaladie());
         if (citizenInfo == null)
             throw new BertsaException(MESSAGE_ERROR_OTHER);
-
-
         return ok(citizenService.register(user, citizenInfo));
     }
 
@@ -84,13 +82,21 @@ public class SystemService {
             throw new BertsaException(MESSAGE_ERROR_ALREADY_COMPLETED);
         if (data.getAddress() == null)
             throw new BertsaException(MESSAGE_ERROR_ADDRESS);
-        if (licenseService.doesCitizenNeedTutor(user.getBirth()))
-            throw new BertsaException(MESSAGE_ERROR_TUTOR);
+        if (licenseService.doesCitizenNeedTutor(user.getBirth())) {
+            if (data.getTutor() == null)
+                throw new BertsaException(MESSAGE_ERROR_TUTOR);
+            Citizen tutor = citizenService.findByEmail(data.getTutor().getEmail());
+            if (tutor == null) {
+                throw new BertsaException(MESSAGE_ERROR_TUTOR);
+            } else {
+                user.setTutor(tutor);
+            }
+        }
 
         user.setAddress(addressService.createOrGetAddress(data.getAddress()));
         user.setLicense(licenseService.createLicense(type, user.getBirth()));
         user.setProfileCompleted(true);
-//            sendEmail(user.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + user.getLicense().getId());//TODO Dans un thread?
+        sendEmail(user.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + user.getLicense().getId());//TODO Dans un thread?
         return ok(citizenService.addOrUpdate(user));
     }
 
@@ -197,11 +203,20 @@ public class SystemService {
 
     public ResponseEntity<Citizen> resetPassword(String token, String password) {
         PasswordResetToken passwordResetToken = passwordResetTokenService.validatePasswordResetToken(token);
-
         Citizen user = passwordResetToken.getUser();
         user.setPassword(password);
-
         return ok(citizenService.addOrUpdate(user));
+    }
+
+    public ResponseEntity<Boolean> delete(Citizen user) {
+        Citizen citizen = citizenService.findByEmailAndPasswordAndActive(user.getEmail(), user.getPassword());
+        if (citizen == null) throw new BertsaException(MESSAGE_ERROR_DELETION);
+        citizen.setActive(false);
+        return ok(!citizenService.addOrUpdate(citizen).isActive());
+    }
+
+    public boolean isActive(String email) {
+        return citizenService.findByEmail(email).isActive();
     }
 
 //    public void pdff(){

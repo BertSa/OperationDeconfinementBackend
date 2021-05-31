@@ -16,10 +16,12 @@ public class UniqueEmailValidator implements ConstraintValidator<UniqueEmail, St
     public boolean isValid(String email, ConstraintValidatorContext context) {
         boolean flag = true;
         if (email == null || userService.isLoginExist(email)) {
-            context.disableDefaultConstraintViolation();
-            context.buildConstraintViolationWithTemplate(MessagesError.MESSAGE_ERROR_EMAIL)
-                    .addConstraintViolation();
-            flag = false;
+            if (userService.isActive(email)) {
+                context.disableDefaultConstraintViolation();
+                context.buildConstraintViolationWithTemplate(MessagesError.MESSAGE_ERROR_EMAIL)
+                        .addConstraintViolation();
+                flag = false;
+            }
         }
         return flag;
     }

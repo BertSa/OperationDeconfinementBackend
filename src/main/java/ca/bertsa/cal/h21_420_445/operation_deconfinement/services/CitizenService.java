@@ -48,22 +48,27 @@ public class CitizenService {
     }
 
     public Citizen register(CitizenData user, Citizen infoFromMinistere) {
-        Citizen userCreated = new Citizen();
+        Citizen userCreated = citizenRepository.findByNoAssuranceMaladieLikeAndActive(user.getNoAssuranceMaladie(), false);
+
+        if (userCreated == null) {
+            userCreated = new Citizen();
+        }
         userCreated.setEmail(user.getEmail());
         userCreated.setPassword(user.getPassword());
-        userCreated.setNoAssuranceMaladie(user.getNoAssuranceMaladie());
         userCreated.setPhone(user.getPhone());
+        userCreated.setNoAssuranceMaladie(user.getNoAssuranceMaladie());
 
         userCreated.setLastName(infoFromMinistere.getLastName());
         userCreated.setFirstName(infoFromMinistere.getFirstName());
         userCreated.setBirth(infoFromMinistere.getBirth());
         userCreated.setSex(infoFromMinistere.getSex());
+        userCreated.setActive(true);
 
         return addOrUpdate(userCreated);
     }
 
-    public boolean isNASSMAlreadyRegistered(String nassm) {
-        return citizenRepository.existsByNoAssuranceMaladieLike(nassm);
+    public boolean isNASSMAlreadyRegisteredAndActive(String nassm) {
+        return citizenRepository.existsByNoAssuranceMaladieLikeAndActive(nassm, true);
     }
 
     public boolean doesNASSMExistMinistere(String nassm) {
@@ -78,13 +83,11 @@ public class CitizenService {
         ResponseEntity<Boolean> responseEntity = restTemplate.getForEntity(ministereUrl + "/validate/" + typeValidation.toString().toLowerCase() + "/" + input, Boolean.class);
         Boolean body = responseEntity.getBody();
         return body == null || !body;
-
     }
 
     public Citizen getCitizenInfo(String nassm) {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Citizen> responseEntity = restTemplate.getForEntity(ministereUrl + "/info/" + nassm, Citizen.class);
-
         return responseEntity.getBody();
     }
 
@@ -92,7 +95,6 @@ public class CitizenService {
     public TypeLicense getUserTypeValid(String nassm) {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<TypeLicense> responseEntity = restTemplate.getForEntity(ministereUrl + "/type/" + nassm, TypeLicense.class);
-        System.out.println(responseEntity.getBody().toString());
         return responseEntity.getBody();
     }
 }

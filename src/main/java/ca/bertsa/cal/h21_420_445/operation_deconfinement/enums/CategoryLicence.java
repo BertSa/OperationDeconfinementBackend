@@ -1,5 +1,7 @@
 package ca.bertsa.cal.h21_420_445.operation_deconfinement.enums;
 
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.exceptions.BertsaException;
+
 import java.time.LocalDate;
 
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.ServerConst.*;
@@ -18,6 +20,6 @@ public enum CategoryLicence {
         if (birth.isBefore(LocalDate.now().minusYears(MIN_AGE_YOUNG_ADULT).plusDays(1))) return CategoryLicence.YoungAdult;
         if (birth.isBefore(LocalDate.now())) return CategoryLicence.Children;
 
-        throw new RuntimeException("Birth invalid!");
+        throw new BertsaException("Birth invalid!");
     }
 }

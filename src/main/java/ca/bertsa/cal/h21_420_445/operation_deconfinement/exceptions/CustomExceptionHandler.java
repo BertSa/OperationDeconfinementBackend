@@ -9,7 +9,6 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -47,8 +46,9 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse error = new ErrorResponse("System Problem!", details);
         return new ResponseEntity(error, HttpStatus.BAD_REQUEST);
     }
+
     @ExceptionHandler(ConnectException.class)
-    public final ResponseEntity<Object> handleResourceAccessException(ConnectException ex){
+    public final ResponseEntity<Object> handleResourceAccessException(ConnectException ex) {
         List<String> details = new ArrayList<>();
         details.add(MessagesError.MESSAGE_ERROR_OTHER);
 

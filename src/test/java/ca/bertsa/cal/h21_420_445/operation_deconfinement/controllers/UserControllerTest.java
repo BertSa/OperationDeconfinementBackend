@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDate;
 
+import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.CategoryLicence.Children;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.NEGATIVETEST;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense.VACCINE;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError.*;
@@ -94,12 +95,12 @@ class UserControllerTest {
         citizenData.setPhone("313-312-3212");
 
         citizenData.setEmail("vaccineValid@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112235");
+        citizenData.setNoAssuranceMaladie("QTWT14911550");
         vaccineValid = systemService.registerCitizen(citizenData, VACCINE).getBody();
 
 
         citizenData.setEmail("negativeValid@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112232");
+        citizenData.setNoAssuranceMaladie("QVXJ99808420");
         negativeValid = systemService.registerCitizen(citizenData, NEGATIVETEST).getBody();
 
     }
@@ -136,8 +137,8 @@ class UserControllerTest {
                 post(API_USER + "/login")
                         .param(PARAM_EMAIL, email)
                         .param(PARAM_PASSWORD, password))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").doesNotExist())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.details").value(MESSAGE_ERROR_LOGIN))
                 .andDo(print());
 
     }
@@ -164,7 +165,7 @@ class UserControllerTest {
     @Test
     void registerBadEmail() throws Exception {
         citizen.setEmail(adultActive.getEmail());
-        citizen.setNoAssuranceMaladie("eeee11112220");
+        citizen.setNoAssuranceMaladie("PZZR66096308");
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
@@ -216,9 +217,43 @@ class UserControllerTest {
     }
 
     @Test
-    void registerChildOnAdultRegister() throws Exception {
+    void registerChild() throws Exception {
         citizen.setEmail("c1@bertsa.ca");
-        citizen.setNoAssuranceMaladie("eeee11112231");
+        citizen.setNoAssuranceMaladie("QRGB91973077");
+
+        int sizeBefore = citizenService.getNbOfCitizen();
+
+        MvcResult mvcResult1 = this.mockMvc.perform(
+                post(REGISTER_URL + "/" + NEGATIVETEST)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(citizen)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andReturn();
+
+        Citizen child = objectMapper.readValue(mvcResult1.getResponse().getContentAsString(), Citizen.class);
+
+        child.setAddress(address);
+        child.setTutor(adultActive);
+        this.mockMvc.perform(
+                post(COMPLETE_URL)
+                        .contentType(MediaType.APPLICATION_JSON_VALUE)
+                        .content(objectMapper.writeValueAsString(child)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").exists())
+                .andExpect(jsonPath("$.license.id").exists())
+                .andExpect(jsonPath("$.license.type").value(NEGATIVETEST.toString()))
+                .andExpect(jsonPath("$.license.category").value(Children.toString()))
+        ;
+
+        int sizeAfter = citizenService.getNbOfCitizen();
+        assertEquals(sizeBefore + 1, sizeAfter);
+    }
+
+    @Test
+    void registerChildWithoutAdult() throws Exception {
+        citizen.setEmail("c1@bertsa.ca");
+        citizen.setNoAssuranceMaladie("QRGB91973077");
 
         int sizeBefore = citizenService.getNbOfCitizen();
 
@@ -251,7 +286,7 @@ class UserControllerTest {
         citizenData.setPassword(DEFAULT_PASSWORD);
         citizenData.setPhone("313-312-3212");
         citizenData.setEmail("u45@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112226");
+        citizenData.setNoAssuranceMaladie("ODXD45401716");
         Citizen negative = systemService.registerCitizen(citizenData, NEGATIVETEST).getBody();
 
         assertNotNull(negative);
@@ -274,7 +309,7 @@ class UserControllerTest {
         citizenData.setPassword(DEFAULT_PASSWORD);
         citizenData.setPhone("313-312-3212");
         citizenData.setEmail("u46@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112227");
+        citizenData.setNoAssuranceMaladie("NOFR47914719");
         Citizen vaccine = systemService.registerCitizen(citizenData, VACCINE).getBody();
 
         assertNotNull(vaccine);
@@ -310,7 +345,7 @@ class UserControllerTest {
         citizenData.setPassword(DEFAULT_PASSWORD);
         citizenData.setPhone("313-312-3212");
         citizenData.setEmail("u45@bertsa.ca");
-        citizenData.setNoAssuranceMaladie("eeee11112229");
+        citizenData.setNoAssuranceMaladie("NShR53841129");
         Citizen negative = systemService.registerCitizen(citizenData, NEGATIVETEST).getBody();
 
         assertNotNull(negative);

@@ -68,12 +68,6 @@ class CitizenRepositoryTest {
     }
 
     @Test
-    void findUserByEmailIgnoreCase() {
-
-
-    }
-
-    @Test
     void findByEmailIgnoreCaseAndPasswordAndActive() {
         Citizen save = citizenRepository.save(adultActive);
         Citizen notAUser = citizenRepository.findByEmailIgnoreCaseAndPasswordAndActive("samdddada@bertsa.ca", "aadadadmin", true);
@@ -87,22 +81,5 @@ class CitizenRepositoryTest {
         citizenRepository.delete(aUser);
     }
 
-    @Test
-    void findByEmailIgnoreCaseAndPasswordAndActiveAndBirthBefore() {
-    }
 
-    @Test
-    void findUserByEmailIgnoreCaseAndPassword() {
-    }
-
-
-    @Test
-    void findUserByNoAssuranceMaladieIgnoreCase() {
-    }
-
-
-    @AfterEach
-    void afterEach() {
-
-    }
 }

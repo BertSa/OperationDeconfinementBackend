@@ -22,7 +22,7 @@ public class NoAssuranceMaladieValidator implements ConstraintValidator<NoAssura
         if (str != null) {
             String nassm = str.replaceAll("[^A-Za-z0-9]+?", "").toLowerCase();
             if (nassm.matches("[A-Za-z]{4}[0-9]{8}")) {
-                if (!citizenService.isNASSMAlreadyRegistered(nassm)) {
+                if (!citizenService.isNASSMAlreadyRegisteredAndActive(nassm)) {
                     if (citizenService.doesNASSMExistMinistere(nassm)) {
                         flag = true;
                     } else {
