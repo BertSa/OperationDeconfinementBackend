@@ -20,7 +20,7 @@ public class LicenseService {
     @Autowired
     private LicenseRepository licenseRepository;
 
-    public License createLicenseAtRegister(TypeLicense typeLicense, LocalDate birth) throws Exception {
+    public License createLicense(TypeLicense typeLicense, LocalDate birth) throws Exception {
 
         License license = new License();
         license.setType(typeLicense);

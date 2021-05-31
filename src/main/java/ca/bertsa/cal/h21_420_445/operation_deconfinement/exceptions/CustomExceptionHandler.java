@@ -4,6 +4,7 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.MailAuthenticationException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,6 +36,15 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         details.add(ex.getLocalizedMessage());
 
         ErrorResponse error = new ErrorResponse("Problem with values given!", details);
+        return new ResponseEntity(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MailAuthenticationException.class)
+    public final ResponseEntity<Object> handleMailAuthenticationException(MailAuthenticationException ex) {
+        List<String> details = new ArrayList<>();
+        details.add("Service currently unavailable.");
+
+        ErrorResponse error = new ErrorResponse("System Problem!", details);
         return new ResponseEntity(error, HttpStatus.BAD_REQUEST);
     }
     @ExceptionHandler(ConnectException.class)

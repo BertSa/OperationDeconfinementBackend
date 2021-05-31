@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Email;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 @RestController
@@ -48,7 +49,29 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(null);
     }
+    @CrossOrigin
+    @PostMapping("/renew/{type}")
+    public ResponseEntity<Citizen> renew(@PathVariable TypeLicense type,@RequestBody @Valid Citizen user) throws Exception {
+        return systemService.renew(type,user);
+    }
 
+    @CrossOrigin
+    @PostMapping("/sendCopy")
+    public ResponseEntity<Boolean> sendCopy(@RequestBody @Valid Citizen user) throws Exception {
+        return systemService.sendLicenseCopy(user);
+    }
+
+    @CrossOrigin
+    @PostMapping("/forgotPassword")
+    public ResponseEntity<Boolean> forgotPassword(@RequestBody String email) throws Exception {
+        return systemService.forgotPassword(email);
+    }
+
+    @CrossOrigin
+    @PostMapping("/resetPassword/{token}")
+    public ResponseEntity<Citizen> resetPassword(@PathVariable String token, @RequestBody String password) {
+        return systemService.resetPassword(token,password);
+    }
 
 //    @GetMapping(value = "<ton url>/{email}", produces = MediaType.APPLICATION_PDF_VALUE)
 //    @CrossOrigin

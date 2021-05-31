@@ -12,4 +12,5 @@ public interface MessagesError {
     String MESSAGE_ERROR_NASSM_INVALID = "nassm is invalid!";
     String MESSAGE_ERROR_NASSM_IS_NULL = "nassm is null!";
     String MESSAGE_ERROR_OTHER = "Problem during the creation of your account, please contact us...";
+    String MESSAGE_ERROR_LOGIN = "Email or Password Invalid!";
 }

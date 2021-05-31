@@ -2,6 +2,7 @@ package ca.bertsa.cal.h21_420_445.operation_deconfinement.services;
 
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Address;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.Citizen;
+import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.PasswordResetToken;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.User;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.CitizenData;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
@@ -21,6 +22,8 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import javax.mail.internet.MimeMessage;
+import javax.validation.Valid;
+import javax.validation.constraints.Email;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -49,11 +52,13 @@ public class SystemService {
     private LicenseService licenseService;
     @Autowired
     private AddressService addressService;
+    @Autowired
+    private PasswordResetTokenService passwordResetTokenService;
 
     public User login(String email, String password) {
         Citizen citizen = citizenService.findByEmailAndPasswordAndActive(email, password);
         if (citizen == null)
-            throw new BertsaException("EmailOrPasswordInvalid");
+            throw new BertsaException(MESSAGE_ERROR_LOGIN);
         return citizen;
     }
 
@@ -83,7 +88,7 @@ public class SystemService {
             throw new BertsaException(MESSAGE_ERROR_TUTOR);
 
         user.setAddress(addressService.createOrGetAddress(data.getAddress()));
-        user.setLicense(licenseService.createLicenseAtRegister(type, user.getBirth()));
+        user.setLicense(licenseService.createLicense(type, user.getBirth()));
         user.setProfileCompleted(true);
 //            sendEmail(user.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + user.getLicense().getId());//TODO Dans un thread?
         return ok(citizenService.addOrUpdate(user));
@@ -122,17 +127,25 @@ public class SystemService {
         document.close();
     }
 
+    private void sendEmail(String mailTo, String subject, String body) throws Exception {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setTo(mailTo);
+        helper.setSubject(subject);
+        helper.setText(body);
+
+        mailSender.send(message);
+    }
+
     public void sendEmail(String mailTo, String subject, String body, String subDirectory) throws Exception {
 
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
         helper.setTo(mailTo);
         helper.setSubject(subject);
         helper.setText(body);
         helper.addAttachment("QR CODE", new File((DIRECTORY_LICENSES + subDirectory + QR_FILENAME)));
         helper.addAttachment("QR PDF", new File(DIRECTORY_LICENSES + subDirectory + PDF_FILENAME));
-
         mailSender.send(message);
 
     }
@@ -153,6 +166,41 @@ public class SystemService {
     public ResponseEntity<Citizen> updatePassword(Citizen data) {
         Citizen user = citizenService.findByEmail(data.getEmail());
         user.setPassword(data.getPassword());
+        return ok(citizenService.addOrUpdate(user));
+    }
+
+    public ResponseEntity<Citizen> renew(TypeLicense type, Citizen data) throws Exception {
+        Citizen user = citizenService.findByEmailAndPassword(data.getEmail(), data.getPassword());
+        if (user == null) throw new BertsaException(MESSAGE_ERROR_LOGIN);
+        if (citizenService.isNotEligibleForLicense(type, user.getNoAssuranceMaladie()))
+            throw new BertsaException(MESSAGE_ERROR_NOT_ELIGIBLE_FOR_LICENSE + type);
+        user.setLicense(licenseService.createLicense(type, user.getBirth()));
+        return ok(citizenService.addOrUpdate(user));
+    }
+
+    public ResponseEntity<Boolean> sendLicenseCopy(Citizen user) throws Exception {
+        Citizen data = this.citizenService.findByEmailAndPassword(user.getEmail(), user.getPassword());
+        sendEmail(data.getEmail(), "CovidFreePass", "Here is your CovidFreePass");//TODO Dans un thread?
+        return ok(true);
+    }
+
+
+    public ResponseEntity<Boolean> forgotPassword(@Valid @Email String email) throws Exception {
+        Citizen data = this.citizenService.findByEmail(email);
+        if (data == null) throw new BertsaException(MESSAGE_ERROR_EMAIL);
+
+        PasswordResetToken passwordResetToken = passwordResetTokenService.createPasswordResetToken(data);
+
+        sendEmail(data.getEmail(), "Change Password", "Go to " + changePasswordUrl + passwordResetToken.getToken() + " to reset your password");//TODO Dans un thread?
+        return ok(true);
+    }
+
+    public ResponseEntity<Citizen> resetPassword(String token, String password) {
+        PasswordResetToken passwordResetToken = passwordResetTokenService.validatePasswordResetToken(token);
+
+        Citizen user = passwordResetToken.getUser();
+        user.setPassword(password);
+
         return ok(citizenService.addOrUpdate(user));
     }
 

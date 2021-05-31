@@ -14,4 +14,5 @@ public interface ServerConst {
     short QR_CODE_WIDTH = 300;
     short QR_CODE_HEIGHT = 300;
 
+    String changePasswordUrl = "http://localhost:4200/pwd/change/";
 }

@@ -32,10 +32,10 @@ class LicenseServiceTest {
     @Test
     void createLicenseAtRegisterTest() throws Exception {
         int sizeBefore = licenseRepository.findAll().size();
-        License license1 = licenseService.createLicenseAtRegister(TypeLicense.NEGATIVETEST, LocalDate.now().minusYears(16));
-        License license2 = licenseService.createLicenseAtRegister(TypeLicense.NEGATIVETEST, LocalDate.now().minusYears(15));
-        License license3 = licenseService.createLicenseAtRegister(TypeLicense.NEGATIVETEST, LocalDate.now().minusYears(25));
-        License license4 = licenseService.createLicenseAtRegister(TypeLicense.VACCINE, LocalDate.now().minusYears(65));
+        License license1 = licenseService.createLicense(TypeLicense.NEGATIVETEST, LocalDate.now().minusYears(16));
+        License license2 = licenseService.createLicense(TypeLicense.NEGATIVETEST, LocalDate.now().minusYears(15));
+        License license3 = licenseService.createLicense(TypeLicense.NEGATIVETEST, LocalDate.now().minusYears(25));
+        License license4 = licenseService.createLicense(TypeLicense.VACCINE, LocalDate.now().minusYears(65));
         int sizeAfter = licenseRepository.findAll().size();
 
         assertEquals(CategoryLicence.YoungAdult, license1.getCategory());
