@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.MessagesError.*;
 import static ca.bertsa.cal.h21_420_445.operation_deconfinement.env.ServerConst.*;
@@ -186,7 +187,10 @@ public class SystemService {
 
     public ResponseEntity<Boolean> sendLicenseCopy(Citizen user) throws Exception {
         Citizen data = this.citizenService.findByEmailAndPassword(user.getEmail(), user.getPassword());
-        sendEmail(data.getEmail(), "CovidFreePass", "Here is your CovidFreePass");//TODO Dans un thread?
+        if (data==null) throw new BertsaException("UserNotFound");
+        if (data.getLicense().getDateExpire().isBefore(LocalDate.now())) throw new BertsaException("License Expired!");
+        sendEmail(data.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + data.getLicense().getId());//TODO Dans un thread?
+
         return ok(true);
     }
 
