@@ -3,6 +3,8 @@ package ca.bertsa.cal.h21_420_445.operation_deconfinement.entities;
 import lombok.Data;
 
 import javax.persistence.Column;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import javax.persistence.MappedSuperclass;
 import java.io.Serializable;
 
