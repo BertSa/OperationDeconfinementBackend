@@ -15,16 +15,23 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import javax.mail.internet.MimeMessage;
 import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -187,7 +194,7 @@ public class SystemService {
 
     public ResponseEntity<Boolean> sendLicenseCopy(Citizen user) throws Exception {
         Citizen data = this.citizenService.findByEmailAndPassword(user.getEmail(), user.getPassword());
-        if (data==null) throw new BertsaException("UserNotFound");
+        if (data == null) throw new BertsaException("UserNotFound");
         if (data.getLicense().getDateExpire().isBefore(LocalDate.now())) throw new BertsaException("License Expired!");
         sendEmail(data.getEmail(), "CovidFreePass", "Here is your CovidFreePass", "id" + data.getLicense().getId());//TODO Dans un thread?
 
@@ -223,9 +230,16 @@ public class SystemService {
         return citizenService.findByEmail(email).isActive();
     }
 
-//    public void pdff(){
-//        InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
-//
-//        return ResponseEntity.ok().contentLength(file.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).body(resource);
-//    }
+    public ResponseEntity<byte[]> qr(String email) throws Exception {
+
+        Citizen byEmail = citizenService.findByEmail(email);
+        if (byEmail == null) throw new BertsaException(MESSAGE_ERROR_EMAIL);
+
+        Long id = byEmail.getLicense().getId();
+
+        generateQR(licenceEndPoint + id, "id" + id);
+
+        byte[] image = Files.readAllBytes(Path.of(DIRECTORY_LICENSES + "id" + id + QR_FILENAME));
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(image);
+    }
 }

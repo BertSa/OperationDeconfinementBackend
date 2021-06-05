@@ -7,11 +7,15 @@ import ca.bertsa.cal.h21_420_445.operation_deconfinement.entities.models.LoginDa
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.enums.TypeLicense;
 import ca.bertsa.cal.h21_420_445.operation_deconfinement.services.SystemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Email;
+import java.io.FileNotFoundException;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 @RestController
@@ -75,13 +79,14 @@ public class UserController {
 
     @CrossOrigin
     @PostMapping("/delete")
-    public ResponseEntity<Boolean> delete( @RequestBody Citizen user) {
+    public ResponseEntity<Boolean> delete(@RequestBody Citizen user) {
         return systemService.delete(user);
     }
-//    @GetMapping(value = "<ton url>/{email}", produces = MediaType.APPLICATION_PDF_VALUE)
-//    @CrossOrigin
-//    public ResponseEntity<Resource> pdf(@NotBlank @PathVariable String email) throws FileNotFoundException {
-//        return systemService.pdff(email);
-//    }
+
+    @GetMapping(value = "/{email}/qr.png")
+    @CrossOrigin
+    public ResponseEntity<byte[]> pdf(@Email @PathVariable String email) throws Exception {
+        return systemService.qr(email);
+    }
 
 }

@@ -15,4 +15,5 @@ public interface ServerConst {
     short QR_CODE_HEIGHT = 300;
 
     String changePasswordUrl = "http://localhost:4200/pwd/change/";
+    String licenceEndPoint = "license/";
 }
